@@ -1,0 +1,21 @@
+namespace: manageengine
+name: sdp_cloud
+version: 1.0.0
+readme: README.md
+authors:
+  - Harish Kumar <harishkumar.k@zohocorp.com>
+  - Bharath B <bharath.baskaran@zohocorp.com>
+description: Ansible Collection for interacting with ManageEngine ServiceDeskPlus Cloud ITSM
+license_file:  
+  - GPL-3.0-or-later
+tags:
+  - manageengine
+  - servicedeskplus
+  - itsm
+  - infrastructure
+dependencies: {}
+repository: https://github.com/ansible-collections/manageengine.sdpcloud
+homepage: https://github.com/ansible-collections/manageengine.sdpcloud
+issues: https://github.com/ansible-collections/manageengine.sdpcloud/issues
+build_ignore:
+  - .gitignore

@@ -1,0 +1,25 @@
+---
+- name: Generate SDP Cloud Access Token
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  
+  vars_files:
+    - credentials.yml
+
+  tasks:
+    - name: Fetch OAuth Token
+      manageengine.sdp_cloud.oauth_token:
+        client_id: "{{ client_id }}"
+        client_secret: "{{ client_secret }}"
+        refresh_token: "{{ refresh_token }}"
+        dc: "{{ dc }}"
+      register: token_output
+
+    - name: Display Access Token
+      debug:
+        msg: 
+          - "---------------------------------------------------"
+          - "Access Token: {{ token_output.access_token }}"
+          - "Expires In: {{ token_output.expires_in }} seconds"
+          - "---------------------------------------------------"
