@@ -7,23 +7,21 @@ __metaclass__ = type
 
 DOCUMENTATION = r'''
 ---
-module: read_record
-short_description: Read API module for ManageEngine ServiceDesk Plus Cloud
+module: read_change_record
+short_description: Read Change Record for ManageEngine ServiceDesk Plus Cloud
 description:
-  - Performs data retrieval API operations (GET) on ManageEngine ServiceDesk Plus Cloud entities.
-  - Supports Requests, Problems, and Changes.
-  - Supports Parent, Child, and Grandchild module hierarchy.
+  - Retrieves Change details or a list of Changes from ServiceDesk Plus Cloud.
 extends_documentation_fragment:
   - manageengine.sdp_cloud.sdp
 options:
   domain:
     description:
-      - The domain URL of your ServiceDesk Plus Cloud instance (e.g., sdpondemand.manageengine.com).
+      - The domain URL of your ServiceDesk Plus Cloud instance.
     type: str
     required: true
   portal_name:
     description:
-      - The portal name (e.g., ithelpdesk).
+      - The portal name.
     type: str
     required: true
   auth_token:
@@ -32,45 +30,22 @@ options:
       - Mutually exclusive with I(client_id), I(client_secret), I(refresh_token).
     type: str
     no_log: true
-  parent_module_name:
-    description:
-      - The parent module name (e.g., requests, problems, changes).
-    type: str
-    required: true
-    choices: [request, problem, change]
-  child_module_name:
-    description:
-      - The child module name (e.g., tasks, worklog, uploads, checklists).
-    type: str
-  grand_child_module_name:
-    description:
-      - The grandchild module name (e.g., comments, worklogs, uploads).
-    type: str
   parent_id:
     description:
-      - The ID of the parent entity.
-    type: str
-  child_id:
-    description:
-      - The ID of the child entity.
-    type: str
-  grand_child_id:
-    description:
-      - The ID of the grandchild entity.
+      - The Change ID. If provided, fetches details for this specific Change.
     type: str
   payload:
     description:
-      - The input data for the API request (e.g., list_info parameters like row_count, start_index).
+      - The input data for filtering the list of Changes (e.g., row_count, start_index).
     type: dict
 author:
   - Harish Kumar <@HKHARI>
 '''
 
 EXAMPLES = r'''
-- name: Get Request Details
-  manageengine.sdp_cloud.read_record:
+- name: Get Change Details
+  manageengine.sdp_cloud.read_change_record:
     domain: "sdpondemand.manageengine.com"
-    parent_module_name: "request"
     parent_id: "100"
     client_id: "your_client_id"
     client_secret: "your_client_secret"
@@ -78,10 +53,9 @@ EXAMPLES = r'''
     dc: "US"
     portal_name: "ithelpdesk"
 
-- name: Get List of Requests
-  manageengine.sdp_cloud.read_record:
+- name: Get List of Changes
+  manageengine.sdp_cloud.read_change_record:
     domain: "sdpondemand.manageengine.com"
-    parent_module_name: "request"
     client_id: "your_client_id"
     client_secret: "your_client_secret"
     refresh_token: "your_refresh_token"
@@ -89,7 +63,6 @@ EXAMPLES = r'''
     portal_name: "ithelpdesk"
     payload:
       row_count: 10
-      start_index: 1
 '''
 
 RETURN = r'''
@@ -102,7 +75,7 @@ response:
 from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.read_utils import run_read_module
 
 def main():
-    run_read_module()
+    run_read_module(module_name='change')
 
 if __name__ == '__main__':
     main()

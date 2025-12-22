@@ -1,14 +1,27 @@
-parent_module_name should be validated based on sdpconfig. 
+# Support for Other Modules
 
-- config should be restructured like this
-- No need for singular just use the key singlar key and strict with that also change the places where we used this
+Support the following modules with the existing framework:
+- Request
+- Problem
+- Change
 
-<Singlar_moudle_name> : {
-    endpoint : <endpoint>,
-    children : {
-        <child_moudule_singilar_name> : {
-            endpoint : <endpoint>
-            children : {}
+## Configuration Validation
+`parent_module_name` should be validated based on `sdp_config`.
+
+### Configuration Restructuring
+- The configuration should be restructured to use **singular module names** as keys.
+- Enforce strict usage of singular keys.
+- Update all references in the codebase to match this structure.
+
+**Proposed Structure:**
+```python
+<Singular_module_name> : {
+    "endpoint" : "<endpoint>",
+    "children" : {
+        "<child_module_singular_name>" : {
+            "endpoint" : "<endpoint>",
+            "children" : {}
         }
     }
 }
+```

@@ -1,0 +1,53 @@
+---
+- name: Manage SDP Cloud Changes
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - credentials.yml
+
+  tasks:
+    - name: Create a new Change
+      manageengine.sdp_cloud.write_change:
+        domain: "{{ domain }}"
+        portal_name: "{{ portal_name }}"
+        client_id: "{{ client_id }}"
+        client_secret: "{{ client_secret }}"
+        refresh_token: "{{ refresh_token }}"
+        dc: "{{ dc }}"
+        payload:
+          title: "Upgrade Router Firmware"
+          description: "Scheduled upgrade for core router."
+          workflow: 
+            name: "General"
+          change_type:
+             name: "Major"
+      register: new_change
+
+    - name: Display New Change ID
+      debug:
+        msg: "Created Change ID: {{ new_change.response.change.id }}"
+
+    - name: Update the Change
+      manageengine.sdp_cloud.write_change:
+        domain: "{{ domain }}"
+        portal_name: "{{ portal_name }}"
+        client_id: "{{ client_id }}"
+        client_secret: "{{ client_secret }}"
+        refresh_token: "{{ refresh_token }}"
+        dc: "{{ dc }}"
+        parent_id: "{{ new_change.response.change.id }}"
+        payload:
+          priority: "High"
+      register: update_response
+
+    - name: Get Change Details
+      manageengine.sdp_cloud.read_change:
+        domain: "{{ domain }}"
+        portal_name: "{{ portal_name }}"
+        client_id: "{{ client_id }}"
+        client_secret: "{{ client_secret }}"
+        refresh_token: "{{ refresh_token }}"
+        dc: "{{ dc }}"
+        parent_id: "{{ new_change.response.change.id }}"
+      register: change_details

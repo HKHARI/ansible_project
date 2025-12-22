@@ -1,0 +1,51 @@
+---
+- name: Manage SDP Cloud Problems
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - credentials.yml
+
+  tasks:
+    - name: Create a new Problem
+      manageengine.sdp_cloud.write_problem:
+        domain: "{{ domain }}"
+        portal_name: "{{ portal_name }}"
+        client_id: "{{ client_id }}"
+        client_secret: "{{ client_secret }}"
+        refresh_token: "{{ refresh_token }}"
+        dc: "{{ dc }}"
+        payload:
+          title: "Network Latency Issue"
+          description: "High latency observed in switch A."
+          reported_by:
+             name: "Administrator"
+      register: new_problem
+
+    - name: Display New Problem ID
+      debug:
+        msg: "Created Problem ID: {{ new_problem.response.problem.id }}"
+
+    - name: Update the Problem
+      manageengine.sdp_cloud.write_problem:
+        domain: "{{ domain }}"
+        portal_name: "{{ portal_name }}"
+        client_id: "{{ client_id }}"
+        client_secret: "{{ client_secret }}"
+        refresh_token: "{{ refresh_token }}"
+        dc: "{{ dc }}"
+        parent_id: "{{ new_problem.response.problem.id }}"
+        payload:
+          impact: "High"
+      register: update_response
+
+    - name: Get Problem Details
+      manageengine.sdp_cloud.read_problem:
+        domain: "{{ domain }}"
+        portal_name: "{{ portal_name }}"
+        client_id: "{{ client_id }}"
+        client_secret: "{{ client_secret }}"
+        refresh_token: "{{ refresh_token }}"
+        dc: "{{ dc }}"
+        parent_id: "{{ new_problem.response.problem.id }}"
+      register: problem_details

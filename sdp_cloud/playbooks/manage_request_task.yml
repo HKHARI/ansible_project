@@ -1,0 +1,54 @@
+---
+- name: Manage SDP Cloud Request Tasks
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - credentials.yml
+
+  tasks:
+    # Requires an existing Request ID. Replace '100' or verify it exists.
+    - name: Create a new Request Task
+      manageengine.sdp_cloud.write_request_task:
+        domain: "{{ domain }}"
+        portal_name: "{{ portal_name }}"
+        client_id: "{{ client_id }}"
+        client_secret: "{{ client_secret }}"
+        refresh_token: "{{ refresh_token }}"
+        dc: "{{ dc }}"
+        parent_id: "100" 
+        payload:
+          title: "Verify Backup"
+          description: "Check if the backup was successful."
+          status: "Open"
+      register: new_task
+
+    - name: Display New Task ID
+      debug:
+        msg: "Created Task ID: {{ new_task.response.task.id }}"
+
+    - name: Update the Task
+      manageengine.sdp_cloud.write_request_task:
+        domain: "{{ domain }}"
+        portal_name: "{{ portal_name }}"
+        client_id: "{{ client_id }}"
+        client_secret: "{{ client_secret }}"
+        refresh_token: "{{ refresh_token }}"
+        dc: "{{ dc }}"
+        parent_id: "100"
+        child_id: "{{ new_task.response.task.id }}"
+        payload:
+          status: "Closed"
+      register: update_task
+
+    - name: Get Task Details
+      manageengine.sdp_cloud.read_request_task:
+        domain: "{{ domain }}"
+        portal_name: "{{ portal_name }}"
+        client_id: "{{ client_id }}"
+        client_secret: "{{ client_secret }}"
+        refresh_token: "{{ refresh_token }}"
+        dc: "{{ dc }}"
+        parent_id: "100"
+        child_id: "{{ new_task.response.task.id }}"
+      register: task_details
