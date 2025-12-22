@@ -161,7 +161,7 @@
                                 - "is_known_error": {"type": "boolean", "is_group_field": true, "group_name": "known_error_details"},
                                 - For above config payload should be constructed as follows
                                     - known_error_details: {"is_known_error": "true"}
-                    
+                                    
         - Allowed fields Configuration
             - create <module_name>_fields_config.py file in module_utils and have 
                 - allowed_sort_fields : It should have array fields that are supported for sorting for that module

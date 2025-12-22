@@ -69,8 +69,21 @@ Generates an OAuth access token using the refresh token.
   register: auth_token
 ```
 
-### 2. `sdp_api`
-A generic module to perform CRUD operations on SDP Cloud entities (Requests, Problems, Changes, etc.).
+### 2. `read_record`
+A generic module to retrieve data from SDP Cloud entities (Requests, Problems, Changes, etc.).
+
+**Example: Get Request Details**
+```yaml
+- name: Get Request Details
+  manageengine.sdp_cloud.read_record:
+    domain: "sdpondemand.manageengine.com"
+    parent_module_name: "requests"
+    parent_id: "100"
+    # ... credentials ...
+```
+
+### 3. `write_record`
+A generic module to perform state-changing operations (POST, PUT, DELETE) on SDP Cloud entities.
 
 **Features:**
 - **Automatic Payload Construction**: Converts flat playbook variables into complex nested JSON structures required by the API.
@@ -81,7 +94,7 @@ A generic module to perform CRUD operations on SDP Cloud entities (Requests, Pro
 **Example: Creating a Problem**
 ```yaml
 - name: Create a Problem
-  manageengine.sdp_cloud.sdp_api:
+  manageengine.sdp_cloud.write_record:
     auth_token: "{{ auth_token.access_token }}"
     dc: "{{ dc }}"
     module_name: "problems"
@@ -105,7 +118,8 @@ A generic module to perform CRUD operations on SDP Cloud entities (Requests, Pro
 │   ├── plugins/
 │   │   ├── modules/
 │   │   │   ├── oauth_token.py
-│   │   │   └── sdp_api.py
+│   │   │   ├── read_record.py
+│   │   │   └── write_record.py
 │   │   └── module_utils/
 │   │       ├── sdp_api.py
 │   │       ├── sdp_config.py

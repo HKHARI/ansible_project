@@ -1,0 +1,25 @@
+- name: Get Problem by ID (GET)
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  
+  vars_files:
+    - credentials.yml
+    
+  tasks:
+    - name: Get Problem Details
+      manageengine.sdp_cloud.read_record:
+        domain: "{{ domain }}"
+        parent_module_name: "problem"
+        parent_id: "100" # Replace with actual Problem ID
+        client_id: "{{ client_id }}"
+        client_secret: "{{ client_secret }}"
+        refresh_token: "{{ refresh_token }}"
+        dc: "{{ dc }}"
+        portal_name: "{{ portal_name }}"
+      register: details_response
+    
+    - name: Display Details Response
+      debug:
+        msg: 
+          - "{{ details_response }}"

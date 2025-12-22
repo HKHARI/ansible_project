@@ -16,17 +16,58 @@ DC_MAP = {
     'SA': 'https://accounts.zoho.sa'
 }
 
+DC_CHOICES = list(DC_MAP.keys())
+
 MODULE_CONFIG = {
-    'requests': {
-        'singular': 'request',
-        'endpoint': 'requests'
+    'request': {
+        'endpoint': 'requests',
+        'children': {
+            'note': {
+                'endpoint': 'notes',
+                'children': {}
+            },
+            'worklog': {
+                'endpoint': 'worklogs',
+                'children': {}
+            },
+            'task': {
+                'endpoint': 'tasks',
+                'children': {}
+            }
+        }
     },
-    'problems': {
-        'singular': 'problem',
-        'endpoint': 'problems'
+    'problem': {
+        'endpoint': 'problems',
+        'children': {
+            'note': {
+                'endpoint': 'notes',
+                'children': {}
+            },
+            'worklog': {
+                'endpoint': 'worklogs',
+                'children': {}
+            },
+            'task': {
+                'endpoint': 'tasks',
+                'children': {}
+            }
+        }
     },
-    'changes': {
-        'singular': 'change',
-        'endpoint': 'changes'
+    'change': {
+        'endpoint': 'changes',
+        'children': {
+            'note': {
+                'endpoint': 'notes',
+                'children': {}
+            },
+            'worklog': {
+                'endpoint': 'worklogs',
+                'children': {}
+            },
+            'task': {
+                'endpoint': 'tasks',
+                'children': {}
+            }
+        }
     }
 }

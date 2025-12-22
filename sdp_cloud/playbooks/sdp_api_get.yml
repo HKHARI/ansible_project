@@ -1,4 +1,4 @@
-- name: Generate SDP Cloud Access Token
+- name: Get List of Problems (GET)
   hosts: localhost
   connection: local
   gather_facts: no
@@ -7,22 +7,21 @@
     - credentials.yml
     
   tasks:
-    - name: Create a Problem
-      manageengine.sdp_cloud.sdp_api:
+    - name: Get Problems List
+      manageengine.sdp_cloud.read_record:
         domain: "{{ domain }}"
-        parent_module_name: "problems"
+        parent_module_name: "problem"
         client_id: "{{ client_id }}"
         client_secret: "{{ client_secret }}"
         refresh_token: "{{ refresh_token }}"
         dc: "{{ dc }}"
         portal_name: "{{ portal_name }}"
         payload:
-          title: "New problem from Ansible New modulare version"
-          description: "Created via sdp_api module"
-          priority: "High"
-      register: new_problem
+          row_count: 10
+          start_index: 1
+      register: list_response
     
-    - name: Display Problem Data
+    - name: Display List Response
       debug:
         msg: 
-          -{{new_problem}} 
+          - "{{ list_response }}"
