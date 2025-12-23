@@ -23,10 +23,10 @@ def get_access_token(module, client_id, client_secret, refresh_token, dc):
     """
     accounts_url = DC_MAP.get(dc)
     if not accounts_url:
-            module.fail_json(msg="Invalid DC provided: {0}".format(dc))
+        module.fail_json(msg="Invalid DC provided: {0}".format(dc))
 
     token_url = "{0}/oauth/v2/token".format(accounts_url)
-    
+
     payload_data = {
         'client_id': client_id,
         'client_secret': client_secret,
@@ -54,7 +54,7 @@ def get_access_token(module, client_id, client_secret, refresh_token, dc):
             module.fail_json(msg="OAuth Error: {0}".format(data.get('error')), details=data)
     except ValueError:
         module.fail_json(msg="Invalid JSON response from Auth Server")
-    
+
     module.fail_json(msg="Unknown error during token generation", response=data)
 
 
@@ -65,8 +65,8 @@ def _handle_error(module, info, default_msg):
             err_body = json.loads(info['body'])
             # SDP Cloud V3 API Error Structure
             if 'response_status' in err_body:
-                    msgs = err_body['response_status'].get('messages', [])
-                    if msgs:
+                msgs = err_body['response_status'].get('messages', [])
+                if msgs:
                         error_msg = "{0}: {1}".format(msgs[0].get('status_code'), msgs[0].get('message'))
             else:
                 error_msg = err_body.get('error', error_msg)

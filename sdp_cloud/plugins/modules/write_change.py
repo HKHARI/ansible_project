@@ -7,7 +7,7 @@ __metaclass__ = type
 
 DOCUMENTATION = r'''
 ---
-module: write_change_record
+module: write_change
 short_description: Write Change Record for ManageEngine ServiceDesk Plus Cloud
 description:
   - Creates or Updates Change records in ServiceDesk Plus Cloud.
@@ -30,7 +30,6 @@ options:
       - The OAuth access token.
       - Mutually exclusive with I(client_id), I(client_secret), I(refresh_token).
     type: str
-    no_log: true
   parent_id:
     description:
       - The Change ID. If provided, the operation becomes an Update.
@@ -39,13 +38,40 @@ options:
     description:
       - The input data for the Change.
     type: dict
+  operation:
+    description:
+      - The operation to perform (Add, Update, Delete).
+    type: str
+    default: Add
+    choices: [Add, Update, Delete]
+  parent_module_name:
+    description:
+      - The parent module name (Internal Use).
+    type: str
+    choices: [request, problem, change]
+  child_module_name:
+    description:
+      - The child module name (Internal Use).
+    type: str
+  grand_child_module_name:
+    description:
+      - The grandchild module name (Internal Use).
+    type: str
+  child_id:
+    description:
+      - The child ID (Internal Use).
+    type: str
+  grand_child_id:
+    description:
+      - The grandchild ID (Internal Use).
+    type: str
 author:
-  - Harish Kumar <@HKHARI>
+  - Harish Kumar
 '''
 
 EXAMPLES = r'''
 - name: Create a Change
-  manageengine.sdp_cloud.write_change_record:
+  manageengine.sdp_cloud.write_change:
     domain: "sdpondemand.manageengine.com"
     client_id: "your_client_id"
     client_secret: "your_client_secret"
@@ -57,7 +83,7 @@ EXAMPLES = r'''
       description: "Description"
 
 - name: Update a Change
-  manageengine.sdp_cloud.write_change_record:
+  manageengine.sdp_cloud.write_change:
     domain: "sdpondemand.manageengine.com"
     parent_id: "100"
     client_id: "your_client_id"

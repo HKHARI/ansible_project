@@ -30,7 +30,6 @@ options:
       - The OAuth access token.
       - Mutually exclusive with I(client_id), I(client_secret), I(refresh_token).
     type: str
-    no_log: true
   parent_id:
     description:
       - The Request ID (required).
@@ -44,8 +43,31 @@ options:
     description:
       - The input data for the Task.
     type: dict
+  operation:
+    description:
+      - The operation to perform (Add, Update, Delete).
+    type: str
+    default: Add
+    choices: [Add, Update, Delete]
+  parent_module_name:
+    description:
+      - The parent module name (Internal Use).
+    type: str
+    choices: [request, problem, change]
+  child_module_name:
+    description:
+      - The child module name (Internal Use).
+    type: str
+  grand_child_module_name:
+    description:
+      - The grandchild module name (Internal Use).
+    type: str
+  grand_child_id:
+    description:
+      - The grandchild ID (Internal Use).
+    type: str
 author:
-  - Harish Kumar <@HKHARI>
+  - Harish Kumar
 '''
 
 EXAMPLES = r'''

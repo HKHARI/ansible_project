@@ -69,7 +69,7 @@ options:
       - The input data for the API request.
     type: dict
 author:
-  - Harish Kumar <@HKHARI>
+  - Harish Kumar
 '''
 
 EXAMPLES = r'''

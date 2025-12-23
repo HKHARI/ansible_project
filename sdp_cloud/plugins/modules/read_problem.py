@@ -7,7 +7,7 @@ __metaclass__ = type
 
 DOCUMENTATION = r'''
 ---
-module: read_problem_record
+module: read_problem
 short_description: Read Problem Record for ManageEngine ServiceDesk Plus Cloud
 description:
   - Retrieves Problem details or a list of Problems from ServiceDesk Plus Cloud.
@@ -29,7 +29,6 @@ options:
       - The OAuth access token.
       - Mutually exclusive with I(client_id), I(client_secret), I(refresh_token).
     type: str
-    no_log: true
   parent_id:
     description:
       - The Problem ID. If provided, fetches details for this specific Problem.
@@ -38,13 +37,34 @@ options:
     description:
       - The input data for filtering the list of Problems (e.g., row_count, start_index).
     type: dict
+  parent_module_name:
+    description:
+      - The parent module name (Internal Use).
+    type: str
+    choices: [request, problem, change]
+  child_module_name:
+    description:
+      - The child module name (Internal Use).
+    type: str
+  grand_child_module_name:
+    description:
+      - The grandchild module name (Internal Use).
+    type: str
+  child_id:
+    description:
+      - The child ID (Internal Use).
+    type: str
+  grand_child_id:
+    description:
+      - The grandchild ID (Internal Use).
+    type: str
 author:
-  - Harish Kumar <@HKHARI>
+  - Harish Kumar
 '''
 
 EXAMPLES = r'''
 - name: Get Problem Details
-  manageengine.sdp_cloud.read_problem_record:
+  manageengine.sdp_cloud.read_problem:
     domain: "sdpondemand.manageengine.com"
     parent_id: "100"
     client_id: "your_client_id"
@@ -54,7 +74,7 @@ EXAMPLES = r'''
     portal_name: "ithelpdesk"
 
 - name: Get List of Problems
-  manageengine.sdp_cloud.read_problem_record:
+  manageengine.sdp_cloud.read_problem:
     domain: "sdpondemand.manageengine.com"
     client_id: "your_client_id"
     client_secret: "your_client_secret"

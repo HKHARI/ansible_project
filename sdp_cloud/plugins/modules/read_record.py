@@ -63,7 +63,7 @@ options:
       - The input data for the API request (e.g., list_info parameters like row_count, start_index).
     type: dict
 author:
-  - Harish Kumar <@HKHARI>
+  - Harish Kumar
 '''
 
 EXAMPLES = r'''

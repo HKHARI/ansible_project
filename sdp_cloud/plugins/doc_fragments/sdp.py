@@ -19,12 +19,12 @@ options:
     description:
       - The Client Secret generated from the Zoho API Console.
     type: str
-    no_log: true
+
   refresh_token:
     description:
       - The long-lived refresh token.
     type: str
-    no_log: true
+
   dc:
     description:
       - The Data Center location (e.g., US, EU).

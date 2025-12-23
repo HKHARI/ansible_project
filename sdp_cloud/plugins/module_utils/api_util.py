@@ -27,11 +27,9 @@ def common_argument_spec():
         client_secret=dict(type='str', no_log=True),
         refresh_token=dict(type='str', no_log=True),
         dc=dict(type='str', required=True, choices=DC_CHOICES),
-        
         parent_module_name=dict(type='str', required=True, choices=list(MODULE_CONFIG.keys())),
         child_module_name=dict(type='str'),
         grand_child_module_name=dict(type='str'),
-        
         parent_id=dict(type='str'),
         child_id=dict(type='str'),
         grand_child_id=dict(type='str'),
@@ -43,7 +41,6 @@ def validate_parameters(module):
     parent_id = module.params['parent_id']
     child_id = module.params['child_id']
     grand_child_id = module.params['grand_child_id']
-    
     parent_module = module.params['parent_module_name']
     child_module = module.params['child_module_name']
     grand_child_module = module.params['grand_child_module_name']
@@ -51,12 +48,12 @@ def validate_parameters(module):
     # 1. ID Dependency Validation
     if child_id and not parent_id:
         module.fail_json(msg="parent_id is required when child_id is provided.")
-    
+
     if grand_child_id and not (child_id and parent_id):
         module.fail_json(msg="parent_id and child_id are required when grand_child_id is provided.")
 
     if child_module and not parent_id:
-         module.fail_json(msg="parent_id is required when child_module_name is provided.")
+        module.fail_json(msg="parent_id is required when child_module_name is provided.")
 
     if grand_child_module and not (child_module and child_id and parent_id):
         module.fail_json(msg="parent_id, child_module_name, and child_id are required when grand_child_module_name is provided.")
@@ -71,14 +68,14 @@ def validate_parameters(module):
         if child_module not in children_config:
             module.fail_json(msg="Unsupported endpoint error: Child module '{0}' is not supported for parent '{1}'. Supported children: {2}".format(
                 child_module, parent_module, list(children_config.keys())))
-        
         # Validate Grandchild (if applicable)
         if grand_child_module:
             child_config = children_config.get(child_module)
             grand_children_config = child_config.get('children', {})
             if grand_child_module not in grand_children_config:
-                 module.fail_json(msg="Unsupported endpoint error: Grandchild module '{0}' is not supported for child '{1}'. Supported grandchildren: {2}".format(
-                    grand_child_module, child_module, list(grand_children_config.keys())))
+                module.fail_json(msg="Unsupported endpoint error: Grandchild module '{0}' is not "
+                                     "supported for child '{1}'. Supported grandchildren: {2}".format(
+                                         grand_child_module, child_module, list(grand_children_config.keys())))
 
 
 def construct_endpoint(module):
@@ -93,24 +90,24 @@ def construct_endpoint(module):
     # Get endpoints from config
     parent_config = MODULE_CONFIG.get(parent_module)
     endpoint = parent_config['endpoint']
-    
+
     if parent_id:
         endpoint += "/{0}".format(parent_id)
-        
+
         if child_module:
             child_config = parent_config['children'].get(child_module)
             endpoint += "/{0}".format(child_config['endpoint'])
-            
+
             if child_id:
                 endpoint += "/{0}".format(child_id)
-                
+
                 if grand_child_module:
                     grand_child_config = child_config.get('children', {}).get(grand_child_module)
                     endpoint += "/{0}".format(grand_child_config['endpoint'])
-                    
+
                     if grand_child_id:
                         endpoint += "/{0}".format(grand_child_id)
-    
+
     return endpoint
 
 
@@ -121,7 +118,7 @@ class SDPClient:
         self.domain = self.params.get('domain')
         self.portal = self.params.get('portal_name')
         self.auth_token = self.params.get('auth_token')
-        
+
         # OAuth params
         self.client_id = self.params.get('client_id')
         self.client_secret = self.params.get('client_secret')
@@ -141,12 +138,12 @@ class SDPClient:
                 self.module.fail_json(msg="Missing authentication credentials. Provide either 'auth_token' or ('client_id', 'client_secret', 'refresh_token', 'dc').")
 
         url = "{0}/{1}".format(self.base_url, endpoint)
-        
+
         headers = {
             'Authorization': 'Zoho-oauthtoken {0}'.format(self.auth_token),
             'Accept': 'application/v3+json'
         }
-        
+
         payload = None
         if data:
             payload = urllib_parse.urlencode({'input_data': json.dumps(data)})
@@ -176,20 +173,20 @@ class SDPClient:
 def _handle_error(module, info, default_msg):
     error_msg = info.get('msg', default_msg)
     response_body = info.get('body')
-    
+
     if response_body:
         try:
             err_body = json.loads(response_body)
             # SDP Cloud V3 API Error Structure
             if 'response_status' in err_body:
-                    msgs = err_body['response_status'].get('messages', [])
-                    if msgs:
-                        error_msg = "{0}: {1}".format(msgs[0].get('status_code'), msgs[0].get('message'))
+                msgs = err_body['response_status'].get('messages', [])
+                if msgs:
+                    error_msg = "{0}: {1}".format(msgs[0].get('status_code'), msgs[0].get('message'))
             else:
                 error_msg = err_body.get('error', error_msg)
         except ValueError:
             pass
-    
+
     module.fail_json(msg=error_msg, status=info.get('status'), error_details=response_body)
 
 
@@ -199,37 +196,35 @@ def fetch_udf_metadata(module, client):
     Returns a dictionary of UDF fields and their configurations.
     """
     parent_module = module.params['parent_module_name']
-    
+
     # Construct URL for _metainfo
     # URL: <domain>/app/<portal>/api/v3/<parent_module_endpoint>/_metainfo
     parent_config = MODULE_CONFIG.get(parent_module)
     endpoint_name = parent_config.get('endpoint')
     endpoint = "{0}/_metainfo".format(endpoint_name)
-    
+
     module.debug("Fetching UDF metadata from: {0}".format(endpoint))
-    
+
     response = client.request(endpoint, method='GET')
-    
+
     if not response:
         module.fail_json(msg="Failed to fetch metadata for module '{0}'".format(parent_module))
-        
+
     try:
         # Navigate the response structure: metainfo -> fields -> udf_fields
         if 'response_status' in response and response['response_status']['status_code'] != 2000:
-             module.fail_json(msg="Metadata fetch failed: {0}".format(response))
+            module.fail_json(msg="Metadata fetch failed: {0}".format(response))
 
         meta_data = response.get('metainfo', {})
         if not meta_data:
-             # Fallback or check if it's directly in response (some APIs differ)
-             meta_data = response
-             
+            # Fallback or check if it's directly in response (some APIs differ)
+            meta_data = response
+
         fields = meta_data.get('fields', {})
         udf_container = fields.get('udf_fields', {})
         udf_fields_metadata = udf_container.get('fields', {})
-        
         module.debug("Fetched {0} UDF definitions".format(len(udf_fields_metadata)))
         return udf_fields_metadata
-        
     except Exception as e:
         module.fail_json(msg="Error parsing UDF metadata: {0}".format(str(e)))
         return {}
