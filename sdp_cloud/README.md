@@ -1,89 +1,139 @@
 # ManageEngine ServiceDesk Plus Cloud Ansible Collection
 
-The `manageengine.sdp_cloud` collection includes modules to interact with the ManageEngine ServiceDesk Plus Cloud API.
+This collection provides Ansible modules to interact with ManageEngine ServiceDesk Plus Cloud ITSM. It allows you to automate various tasks such as managing requests, problems, and other ITSM entities via the SDP Cloud API.
+
+## Collection Information
+
+- **Namespace**: `manageengine`
+- **Name**: `sdp_cloud`
+- **Version**: `1.0.0`
+- **Authors**: 
+  - Harish Kumar <harishkumar.k@zohocorp.com>
+  - Bharath B <bharath.baskaran@zohocorp.com>
 
 ## Description
 
-This collection allows you to manage Requests, Problems, Changes, and Request Tasks in ServiceDesk Plus Cloud. It supports creating, updating, retrieving details, and listing records.
+This collection allows you to generic read and write operations on ServiceDesk Plus Cloud entities using `read_record` and `write_record`. It also supports OAuth token generation.
 
-## Requirements
+## Installation
 
-- Python 3.6+
-- Ansible 2.9+
+### From Source
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/HKHARI/AnsibleCollections.git
+   ```
+2. Navigate to the collection directory:
+   ```bash
+   cd AnsibleCollections/manageengine/sdp_cloud
+   ```
+3. Build and install the collection:
+   ```bash
+   ansible-galaxy collection build
+   ansible-galaxy collection install manageengine-sdp_cloud-1.0.0.tar.gz
+   ```
 
-## Authentication
+## Configuration
 
-All modules generally require the following authentication parameters:
+### Credentials
+To securely manage your API credentials, create a `credentials.yml` file in your playbooks directory. **Do not commit this file to version control.**
 
-- `domain`: The domain of your SDP Cloud instance (e.g., `sdpondemand.manageengine.com`).
-- `portal_name`: The name of the portal (e.g., `ithelpdesk`).
-- OAuth Credentials:
-    - `client_id`
-    - `client_secret`
-    - `refresh_token`
-    - `dc` (Data Center: US, EU, IN, AU, CN, JP, CA, SA)
-
-Alternatively, you can provide a valid `auth_token` directly (not recommended for playbooks due to token expiration).
-
-## Available Modules
-
-| Module | Description |
-| --- | --- |
-| `write_request` | Create or Update Requests |
-| `read_request` | Get Request details or list Requests |
-| `write_problem` | Create or Update Problems |
-| `read_problem` | Get Problem details or list Problems |
-| `write_change` | Create or Update Changes |
-| `read_change` | Get Change details or list Changes |
-| `write_request_task` | Create or Update Request Tasks |
-| `read_request_task` | Get Request Task details or list Tasks |
-| `write_record` | Generic module for writing records |
-| `read_record` | Generic module for reading records |
-
-## Usage Examples
-
-### Create a Request
+**`credentials.yml` template:**
 ```yaml
-- name: Create Request
-  manageengine.sdp_cloud.write_request:
-    domain: "sdpondemand.manageengine.com"
-    portal_name: "ithelpdesk"
-    client_id: "..."
-    client_secret: "..."
-    refresh_token: "..."
-    dc: "US"
-    payload:
-      subject: "Issue with VPN"
-      status: "Open"
+---
+client_id: "YOUR_CLIENT_ID"
+client_secret: "YOUR_CLIENT_SECRET"
+refresh_token: "YOUR_REFRESH_TOKEN"
+dc: "US" # Data Center (US, EU, IN, AU, CN, JP)
 ```
 
-### Update a Request
+### Usage in Playbooks
+Import the credentials file in your playbooks using `vars_files`:
+
 ```yaml
-- name: Update Request
-  manageengine.sdp_cloud.write_request:
-    domain: "sdpondemand.manageengine.com"
-    portal_name: "ithelpdesk"
-    parent_id: "105"
-    client_id: "..."
-    client_secret: "..."
-    refresh_token: "..."
-    dc: "US"
-    payload:
-      status: "On Hold"
+- hosts: localhost
+  vars_files:
+    - credentials.yml
+  tasks:
+    # ...
 ```
 
-### Add a Task to a Request
+## Modules
+
+### 1. `oauth_token`
+Generates an OAuth access token using the refresh token.
+
+**Example:**
 ```yaml
-- name: Add Task
-  manageengine.sdp_cloud.write_request_task:
-    domain: "sdpondemand.manageengine.com"
-    portal_name: "ithelpdesk"
-    parent_id: "105"
-    client_id: "..."
-    client_secret: "..."
-    refresh_token: "..."
-    dc: "US"
-    payload:
-      title: "Check Logs"
-      status: "Open"
+- name: Fetch OAuth Token
+  manageengine.sdp_cloud.oauth_token:
+    client_id: "{{ client_id }}"
+    client_secret: "{{ client_secret }}"
+    refresh_token: "{{ refresh_token }}"
+    dc: "{{ dc }}"
+  register: auth_token
 ```
+
+### 2. `read_record`
+A generic module to retrieve data from SDP Cloud entities (Requests, Problems, Changes, etc.).
+
+**Example: Get Request Details**
+```yaml
+- name: Get Request Details
+  manageengine.sdp_cloud.read_record:
+    domain: "sdpondemand.manageengine.com"
+    parent_module_name: "request"
+    parent_id: "100"
+    client_id: "{{ client_id }}"
+    client_secret: "{{ client_secret }}"
+    refresh_token: "{{ refresh_token }}"
+    dc: "{{ dc }}"
+    portal_name: "ithelpdesk"
+```
+
+### 3. `write_record`
+A generic module to perform state-changing operations (POST, PUT, DELETE) on SDP Cloud entities.
+
+**Features:**
+- **Automatic Payload Construction**: Converts flat playbook variables into nested JSON structures.
+- **Generic Handling**: Supports any field present in the API.
+
+**Example: Creating a Problem**
+```yaml
+- name: Create a Problem
+  manageengine.sdp_cloud.write_record:
+    auth_token: "{{ auth_token.access_token }}"
+    dc: "{{ dc }}"
+    parent_module_name: "problem"
+    operation: "Add"
+    payload:
+      title: "Network Latency Issue"
+      description: "Users reporting slow access to file server"
+      urgency: "High"        # Lookup field
+      impact: "High"         # Lookup field
+      reported_by: "admin@org.com" # User field (email)
+      is_known_error: true   # Boolean
+  register: problem_response
+```
+
+## Directory Structure
+```
+.
+├── galaxy.yml
+├── plugins/
+│   ├── modules/
+│   │   ├── oauth_token.py
+│   │   ├── read_record.py
+│   │   └── write_record.py
+│   └── module_utils/
+│       ├── sdp_api.py
+│       ├── sdp_config.py
+│       ├── oauth.py
+│       ├── read_utils.py
+│       └── write_utils.py
+└── playbooks/
+    ├── generate_token.yml
+    └── credentials.yml (Excluded from git)
+```
+
+## License
+GPL-3.0-or-later

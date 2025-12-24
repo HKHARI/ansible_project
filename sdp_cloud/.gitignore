@@ -1,5 +1,25 @@
-venv/
-tests/output/
-*.pyc
+# Credentials
+credentials.yml
+*/credentials.yml
+*credentials.yml
+
+# Python
 __pycache__/
+*.py[cod]
+*$py.class
+venv/
+*.pyc
+
+# Ansible
+*.retry
+*.log
+
+# Mac
 .DS_Store
+
+# IDEs
+.vscode/
+.idea/
+
+# Testing
+tests/output/
