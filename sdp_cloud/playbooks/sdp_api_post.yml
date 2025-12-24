@@ -25,4 +25,4 @@
     - name: Display Problem Data
       ansible.builtin.debug:
         msg:
-          -{{ new_problem }} 
+          - "{{ new_problem }}"
