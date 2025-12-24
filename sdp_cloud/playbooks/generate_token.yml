@@ -23,4 +23,3 @@
           - "Access Token: {{ token_output.access_token }}"
           - "Expires In: {{ token_output.expires_in }} seconds"
           - "---------------------------------------------------"
-          

@@ -2,7 +2,7 @@
   hosts: localhost
   connection: local
   gather_facts: false
-  
+
   vars_files:
     - credentials.yml
 
@@ -18,7 +18,7 @@
         dc: "{{ dc }}"
         portal_name: "{{ portal_name }}"
       register: details_response
-    
+
     - name: Display Details Response
       ansible.builtin.debug:
         msg:

@@ -1,7 +1,7 @@
 - name: Update a Problem (PUT)
   hosts: localhost
   connection: local
-  gather_facts: no
+  gather_facts: false
 
   vars_files:
     - credentials.yml
@@ -26,5 +26,5 @@
 
     - name: Display Update Response
       ansible.builtin.debug:
-        msg: 
+        msg:
           - "{{ update_response }}"
