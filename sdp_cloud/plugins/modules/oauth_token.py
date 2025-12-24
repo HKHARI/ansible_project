@@ -8,6 +8,8 @@ __metaclass__ = type
 DOCUMENTATION = r'''
 ---
 module: oauth_token
+author:
+  - Harish Kumar (@HKHARI)
 short_description: Generate ManageEngine SDP Cloud OAuth Access Token
 description:
   - Generates a temporary OAuth access token using a refresh token.
@@ -38,8 +40,6 @@ options:
     type: str
     required: true
     choices: [US, EU, IN, AU, CN, JP, CA, SA]
-author:
-  - Harish Kumar
 '''
 
 EXAMPLES = r'''

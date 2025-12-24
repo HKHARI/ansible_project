@@ -8,6 +8,8 @@ __metaclass__ = type
 DOCUMENTATION = r'''
 ---
 module: write_record
+author:
+  - Harish Kumar (@HKHARI)
 short_description: Write API module for ManageEngine ServiceDesk Plus Cloud
 description:
   - Performs state-changing API operations (POST, PUT, DELETE) on ManageEngine ServiceDesk Plus Cloud entities.
@@ -26,12 +28,17 @@ options:
       - The portal name (e.g., ithelpdesk).
     type: str
     required: true
+  dc:
+    description:
+      - The Data Center location (e.g., US, EU).
+    type: str
+    required: true
+    choices: [US, EU, IN, AU, CN, JP, CA, SA]
   auth_token:
     description:
       - The OAuth access token.
       - Mutually exclusive with I(client_id), I(client_secret), I(refresh_token).
     type: str
-
   parent_module_name:
     description:
       - The parent module name (e.g., requests, problems, changes).
@@ -68,8 +75,6 @@ options:
     description:
       - The input data for the API request.
     type: dict
-author:
-  - Harish Kumar
 '''
 
 EXAMPLES = r'''
@@ -110,6 +115,7 @@ response:
 '''
 
 from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.write_utils import run_write_module
+
 
 def main():
     run_write_module()

@@ -8,6 +8,8 @@ __metaclass__ = type
 DOCUMENTATION = r'''
 ---
 module: read_record
+author:
+  - Harish Kumar (@HKHARI)
 short_description: Read API module for ManageEngine ServiceDesk Plus Cloud
 description:
   - Performs data retrieval API operations (GET) on ManageEngine ServiceDesk Plus Cloud entities.
@@ -26,6 +28,12 @@ options:
       - The portal name (e.g., ithelpdesk).
     type: str
     required: true
+  dc:
+    description:
+      - The Data Center location (e.g., US, EU).
+    type: str
+    required: true
+    choices: [US, EU, IN, AU, CN, JP, CA, SA]
   auth_token:
     description:
       - The OAuth access token.
@@ -61,8 +69,6 @@ options:
     description:
       - The input data for the API request (e.g., list_info parameters like row_count, start_index).
     type: dict
-author:
-  - Harish Kumar
 '''
 
 EXAMPLES = r'''
@@ -99,6 +105,7 @@ response:
 '''
 
 from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.read_utils import run_read_module
+
 
 def main():
     run_read_module()
