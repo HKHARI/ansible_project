@@ -1,19 +1,22 @@
-# ManageEngine ServiceDesk Plus Cloud Ansible Collection
+# Ansible Collection for ManageEngine ServiceDesk Plus Cloud
 
-This collection provides Ansible modules to interact with ManageEngine ServiceDesk Plus Cloud ITSM. It allows you to automate various tasks such as managing requests, problems, and other ITSM entities via the SDP Cloud API.
+The Ansible Collection for [ManageEngine ServiceDesk Plus Cloud](https://www.manageengine.com/products/service-desk/) provides Ansible content that enables users to automate the management of ITSM processes such as requests, problems, and changes.
+
+This collection is ideal for IT administrators, DevOps engineers, and automation specialists who work with ServiceDesk Plus Cloud and want to integrate its capabilities into their infrastructure automation workflows.
+
+## Requirements
+- **Ansible-Core**: >= 2.15.0
+- **Python**: >= 3.6
+- No additional Python libraries are required.
+- A ServiceDesk Plus Cloud instance and OAuth credentials are required for module authentication.
 
 ## Collection Information
-
 - **Namespace**: `manageengine`
 - **Name**: `sdp_cloud`
 - **Version**: `1.0.0`
 - **Authors**: 
   - Harish Kumar <harishkumar.k@zohocorp.com>
   - Bharath B <bharath.baskaran@zohocorp.com>
-
-## Description
-
-This collection allows you to generic read and write operations on ServiceDesk Plus Cloud entities using `read_record` and `write_record`. It also supports OAuth token generation.
 
 ## Installation
 
@@ -32,10 +35,33 @@ This collection allows you to generic read and write operations on ServiceDesk P
    ansible-galaxy collection install manageengine-sdp_cloud-1.0.0.tar.gz
    ```
 
-## Configuration
+### Using requirements.yml
+Include it in a `requirements.yml` file:
+```yaml
+collections:
+  - name: manageengine.sdp_cloud
+    source: https://github.com/HKHARI/AnsibleCollections
+```
 
-### Credentials
-To securely manage your API credentials, create a `credentials.yml` file in your playbooks directory. **Do not commit this file to version control.**
+## Use Cases
+Here are a few common automation scenarios enabled by this collection:
+
+1.  **Request Management**: Automatically create, update, and query requests during CI/CD pipelines or event-driven automation.
+2.  **Problem Management**: Trigger problem records and manage their lifecycle in coordination with incident resolution.
+3.  **Change Management**: Automate the creation and update of change requests during system patching or upgrades.
+
+## Modules
+
+| Name | Description |
+| ---- | ----------- |
+| [oauth_token](https://github.com/HKHARI/AnsibleCollections/blob/main/manageengine/sdp_cloud/plugins/modules/oauth_token.py) | Generate ManageEngine SDP Cloud OAuth Access Token |
+| [read_record](https://github.com/HKHARI/AnsibleCollections/blob/main/manageengine/sdp_cloud/plugins/modules/read_record.py) | Read API module for ManageEngine ServiceDesk Plus Cloud |
+| [write_record](https://github.com/HKHARI/AnsibleCollections/blob/main/manageengine/sdp_cloud/plugins/modules/write_record.py) | Write API module for ManageEngine ServiceDesk Plus Cloud |
+
+## Example Usage
+
+### Configuration
+To securely manage your API credentials, we recommend using a `credentials.yml` file (excluded from version control) or environment variables.
 
 **`credentials.yml` template:**
 ```yaml
@@ -46,23 +72,9 @@ refresh_token: "YOUR_REFRESH_TOKEN"
 dc: "US" # Data Center (US, EU, IN, AU, CN, JP)
 ```
 
-### Usage in Playbooks
-Import the credentials file in your playbooks using `vars_files`:
+### Playbook Examples
 
-```yaml
-- hosts: localhost
-  vars_files:
-    - credentials.yml
-  tasks:
-    # ...
-```
-
-## Modules
-
-### 1. `oauth_token`
-Generates an OAuth access token using the refresh token.
-
-**Example:**
+**Generate Token:**
 ```yaml
 - name: Fetch OAuth Token
   manageengine.sdp_cloud.oauth_token:
@@ -73,67 +85,49 @@ Generates an OAuth access token using the refresh token.
   register: auth_token
 ```
 
-### 2. `read_record`
-A generic module to retrieve data from SDP Cloud entities (Requests, Problems, Changes, etc.).
-
-**Example: Get Request Details**
+**Get Request Details:**
 ```yaml
 - name: Get Request Details
   manageengine.sdp_cloud.read_record:
     domain: "sdpondemand.manageengine.com"
     parent_module_name: "request"
     parent_id: "100"
-    client_id: "{{ client_id }}"
-    client_secret: "{{ client_secret }}"
-    refresh_token: "{{ refresh_token }}"
-    dc: "{{ dc }}"
+    auth_token: "{{ auth_token.access_token }}"
     portal_name: "ithelpdesk"
 ```
 
-### 3. `write_record`
-A generic module to perform state-changing operations (POST, PUT, DELETE) on SDP Cloud entities.
-
-**Features:**
-- **Automatic Payload Construction**: Converts flat playbook variables into nested JSON structures.
-- **Generic Handling**: Supports any field present in the API.
-
-**Example: Creating a Problem**
+**Create a Problem:**
 ```yaml
 - name: Create a Problem
   manageengine.sdp_cloud.write_record:
     auth_token: "{{ auth_token.access_token }}"
     dc: "{{ dc }}"
+    domain: "sdpondemand.manageengine.com"
+    portal_name: "ithelpdesk"
     parent_module_name: "problem"
     operation: "Add"
     payload:
       title: "Network Latency Issue"
       description: "Users reporting slow access to file server"
-      urgency: "High"        # Lookup field
-      impact: "High"         # Lookup field
-      reported_by: "admin@org.com" # User field (email)
-      is_known_error: true   # Boolean
-  register: problem_response
+      urgency: "High"
+      impact: "High"
 ```
 
-## Directory Structure
-```
-.
-├── galaxy.yml
-├── plugins/
-│   ├── modules/
-│   │   ├── oauth_token.py
-│   │   ├── read_record.py
-│   │   └── write_record.py
-│   └── module_utils/
-│       ├── sdp_api.py
-│       ├── sdp_config.py
-│       ├── oauth.py
-│       ├── read_utils.py
-│       └── write_utils.py
-└── playbooks/
-    ├── generate_token.yml
-    └── credentials.yml (Excluded from git)
-```
+## Testing
+This collection is tested with:
+- Ansible-Core >= 2.15.0
+- Python 3.9+
+- ServiceDesk Plus Cloud
 
-## License
-GPL-3.0-or-later
+## Contributing
+We welcome contributions! Please feel free to open an issue or submit a pull request on the repository.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License Information
+This collection is licensed under the GNU General Public License v3.0 or later.
+See: [LICENSE](LICENSE)
