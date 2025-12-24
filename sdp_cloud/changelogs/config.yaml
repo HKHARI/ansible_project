@@ -22,7 +22,7 @@ sections:
 - - removed_features
   - Removed Features (previously deprecated)
 - - security_fixes
-  - Security Fixes
+- Security Fixes
 - - bugfixes
   - Bugfixes
 - - known_issues

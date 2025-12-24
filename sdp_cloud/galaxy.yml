@@ -11,6 +11,7 @@ tags:
   - manageengine
   - servicedeskplus
   - itsm
+  - cloud
 dependencies: {}
 repository: https://github.com/ansible-collections/manageengine.sdpcloud
 homepage: https://github.com/ansible-collections/manageengine.sdpcloud
