@@ -6,7 +6,7 @@ authors:
   - Harish Kumar <harishkumar.k@zohocorp.com>
   - Bharath B <bharath.baskaran@zohocorp.com>
 description: Ansible Collection for interacting with ManageEngine ServiceDeskPlus Cloud ITSM
-license_file:  
+license_file:
   - GPL-3.0-or-later
 tags:
   - manageengine

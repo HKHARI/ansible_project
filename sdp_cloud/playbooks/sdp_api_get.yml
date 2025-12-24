@@ -1,11 +1,11 @@
 - name: Get List of Problems (GET)
   hosts: localhost
   connection: local
-  gather_facts: no
-  
+  gather_facts: false
+
   vars_files:
     - credentials.yml
-    
+
   tasks:
     - name: Get Problems List
       manageengine.sdp_cloud.read_record:
@@ -20,8 +20,8 @@
           row_count: 10
           start_index: 1
       register: list_response
-    
+
     - name: Display List Response
-      debug:
-        msg: 
+      ansible.builtin.debug:
+        msg:
           - "{{ list_response }}"

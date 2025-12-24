@@ -1,11 +1,11 @@
 - name: Generate SDP Cloud Access Token
   hosts: localhost
   connection: local
-  gather_facts: no
-  
+  gather_facts: false
+
   vars_files:
     - credentials.yml
-    
+
   tasks:
     - name: Create a Problem
       manageengine.sdp_cloud.write_record:
@@ -21,8 +21,8 @@
           description: "Created via sdp_api module"
           priority: "High"
       register: new_problem
-    
+
     - name: Display Problem Data
-      debug:
-        msg: 
+      ansible.builtin.debug:
+        msg:
           -{{new_problem}} 

@@ -2,8 +2,8 @@
 - name: Generate SDP Cloud Access Token
   hosts: localhost
   connection: local
-  gather_facts: no
-  
+  gather_facts: false
+
   vars_files:
     - credentials.yml
 
@@ -17,9 +17,10 @@
       register: token_output
 
     - name: Display Access Token
-      debug:
-        msg: 
+      ansible.builtin.debug:
+        msg:
           - "---------------------------------------------------"
           - "Access Token: {{ token_output.access_token }}"
           - "Expires In: {{ token_output.expires_in }} seconds"
           - "---------------------------------------------------"
+          

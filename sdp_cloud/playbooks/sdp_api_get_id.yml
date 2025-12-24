@@ -1,11 +1,11 @@
 - name: Get Problem by ID (GET)
   hosts: localhost
   connection: local
-  gather_facts: no
+  gather_facts: false
   
   vars_files:
     - credentials.yml
-    
+
   tasks:
     - name: Get Problem Details
       manageengine.sdp_cloud.read_record:
@@ -20,6 +20,6 @@
       register: details_response
     
     - name: Display Details Response
-      debug:
-        msg: 
+      ansible.builtin.debug:
+        msg:
           - "{{ details_response }}"
