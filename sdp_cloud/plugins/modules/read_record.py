@@ -103,8 +103,6 @@ from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.read_utils 
 def main():
     run_read_module()
 
+
 if __name__ == '__main__':
     main()
-
-
-

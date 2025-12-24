@@ -73,6 +73,3 @@ def _handle_error(module, info, default_msg):
         except ValueError:
             pass
     module.fail_json(msg=error_msg, status=info['status'])
-
-
-

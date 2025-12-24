@@ -76,8 +76,6 @@ def validate_parameters(module):
                 module.fail_json(msg="Unsupported endpoint error: Grandchild module '{0}' is not "
                                      "supported for child '{1}'. Supported grandchildren: {2}".format(
                                          grand_child_module, child_module, list(grand_children_config.keys())))
-
-
 def construct_endpoint(module):
     """Construct the API endpoint based on hierarchy."""
     parent_module = module.params['parent_module_name']
@@ -229,6 +227,3 @@ def fetch_udf_metadata(module, client):
     except Exception as e:
         module.fail_json(msg="Error parsing UDF metadata: {0}".format(str(e)))
         return {}
-
-
-

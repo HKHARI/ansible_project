@@ -71,6 +71,3 @@ MODULE_CONFIG = {
         }
     }
 }
-
-
-

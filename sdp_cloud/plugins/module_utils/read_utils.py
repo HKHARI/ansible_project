@@ -112,6 +112,3 @@ def run_read_module(module_name=None, child_module_name=None):
     )
 
     module.exit_json(changed=False, response=response, payload=data)
-
-
-
