@@ -31,7 +31,6 @@ options:
       - The OAuth access token.
       - Mutually exclusive with I(client_id), I(client_secret), I(refresh_token).
     type: str
-    no_log: true
   parent_module_name:
     description:
       - The parent module name (e.g., requests, problems, changes).
@@ -106,3 +105,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+

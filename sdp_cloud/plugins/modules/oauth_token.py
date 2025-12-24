@@ -49,12 +49,16 @@ EXAMPLES = r'''
 
 - name: Generate Access Token using Vaulted Variables
   manageengine.sdp_cloud.oauth_token:
-    client_id: "{{ sdp_client_id }}"         # Defined in vault.yml
-    client_secret: "{{ sdp_client_secret }}" # Defined in vault.yml
-    refresh_token: "{{ sdp_refresh_token }}" # Defined in vault.yml
+    # Defined in vault.yml
+    client_id: "{{ sdp_client_id }}"
+    # Defined in vault.yml
+    client_secret: "{{ sdp_client_secret }}"
+    # Defined in vault.yml
+    refresh_token: "{{ sdp_refresh_token }}"
     dc: "US"
   register: auth_response
-  no_log: true # Prevent outputting the token to logs
+  # Prevent outputting the token to logs
+  no_log: true
 
 - name: Use the token in subsequent tasks
   manageengine.sdp_cloud.request_info:
@@ -117,3 +121,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+

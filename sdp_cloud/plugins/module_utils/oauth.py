@@ -67,9 +67,12 @@ def _handle_error(module, info, default_msg):
             if 'response_status' in err_body:
                 msgs = err_body['response_status'].get('messages', [])
                 if msgs:
-                        error_msg = "{0}: {1}".format(msgs[0].get('status_code'), msgs[0].get('message'))
+                    error_msg = "{0}: {1}".format(msgs[0].get('status_code'), msgs[0].get('message'))
             else:
                 error_msg = err_body.get('error', error_msg)
         except ValueError:
             pass
     module.fail_json(msg=error_msg, status=info['status'])
+
+
+

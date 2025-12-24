@@ -6,7 +6,9 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.api_util import SDPClient, common_argument_spec, validate_parameters, construct_endpoint
+from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.api_util import (
+    SDPClient, common_argument_spec, validate_parameters, construct_endpoint
+)
 
 
 def get_read_argument_spec():
@@ -18,35 +20,11 @@ def get_read_argument_spec():
     return module_args
 
 
-def load_field_config(module, module_name, child_module=None):
-    """Dynamically load field configuration for the given module."""
-    if child_module:
-        config_name = "{0}_{1}_fields_config".format(module_name, child_module)
-    else:
-        config_name = "{0}_fields_config".format(module_name)
-
-    config_module_name = "ansible_collections.manageengine.sdp_cloud.plugins.module_utils.field_conf.{0}".format(config_name)
-    try:
-        # Use __import__ for dynamic loading compatible with Ansible's module loader
-        mod = __import__(config_module_name, fromlist=['ALLOWED_SORT_FIELDS'])
-        module.debug("Successfully loaded config for {0}".format(config_name))
-        return mod.ALLOWED_SORT_FIELDS
-    except ImportError as e:
-        module.fail_json(msg="Unsupported module '{0}' or missing configuration file. Error: {1}".format(config_name, str(e)))
-        return None  # Unreachable
-
-
 def construct_payload(module):
     """Validate and construct the payload."""
     payload = module.params['payload']
     if not payload:
         return None
-
-    parent_module = module.params['parent_module_name']
-    child_module = module.params['child_module_name']
-
-    # Load allowed sort fields
-    allowed_sort_fields = load_field_config(module, parent_module, child_module)
 
     validated_payload = {}
 
@@ -70,8 +48,7 @@ def construct_payload(module):
 
     # 2. sort_field
     sort_field = payload.get('sort_field', 'created_date')
-    if sort_field not in allowed_sort_fields:
-        module.fail_json(msg="Invalid sort_field '{0}'. Allowed fields: {1}".format(sort_field, allowed_sort_fields))
+    # Removed strict validation against module specific fields
     validated_payload['sort_field'] = sort_field
 
     # 3. sort_order
@@ -135,3 +112,6 @@ def run_read_module(module_name=None, child_module_name=None):
     )
 
     module.exit_json(changed=False, response=response, payload=data)
+
+
+

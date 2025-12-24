@@ -135,7 +135,8 @@ class SDPClient:
                 token_data = get_access_token(self.module, self.client_id, self.client_secret, self.refresh_token, self.dc)
                 self.auth_token = token_data['access_token']
             else:
-                self.module.fail_json(msg="Missing authentication credentials. Provide either 'auth_token' or ('client_id', 'client_secret', 'refresh_token', 'dc').")
+                self.module.fail_json(msg="Missing authentication credentials. Provide either 'auth_token' or "
+                                      "('client_id', 'client_secret', 'refresh_token').")
 
         url = "{0}/{1}".format(self.base_url, endpoint)
 
@@ -228,3 +229,6 @@ def fetch_udf_metadata(module, client):
     except Exception as e:
         module.fail_json(msg="Error parsing UDF metadata: {0}".format(str(e)))
         return {}
+
+
+
