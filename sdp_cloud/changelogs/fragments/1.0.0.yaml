@@ -1,0 +1,5 @@
+release_summary: Initial release of the ManageEngine ServiceDesk Plus Cloud Ansible Collection.
+new_plugins:
+  - oauth_token - Generate ManageEngine SDP Cloud OAuth Access Token
+  - read_record - Read API module for ManageEngine ServiceDesk Plus Cloud
+  - write_record - Write API module for ManageEngine ServiceDesk Plus Cloud

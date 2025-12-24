@@ -1,0 +1,28 @@
+ancestor: null
+releases:
+  1.0.0:
+    changes:
+      release_summary: Initial release of the ManageEngine ServiceDesk Plus Cloud Ansible Collection.
+      new_plugins:
+      - description: Generate ManageEngine SDP Cloud OAuth Access Token
+        name: oauth_token
+        namespace: manageengine.sdp_cloud
+      - description: Read API module for ManageEngine ServiceDesk Plus Cloud
+        name: read_record
+        namespace: manageengine.sdp_cloud
+      - description: Write API module for ManageEngine ServiceDesk Plus Cloud
+        name: write_record
+        namespace: manageengine.sdp_cloud
+    fragments:
+    - 1.0.0.yaml
+    modules:
+    - description: Generate ManageEngine SDP Cloud OAuth Access Token
+      name: oauth_token
+      namespace: manageengine.sdp_cloud
+    - description: Read API module for ManageEngine ServiceDesk Plus Cloud
+      name: read_record
+      namespace: manageengine.sdp_cloud
+    - description: Write API module for ManageEngine ServiceDesk Plus Cloud
+      name: write_record
+      namespace: manageengine.sdp_cloud
+    release_date: '2025-12-24'
