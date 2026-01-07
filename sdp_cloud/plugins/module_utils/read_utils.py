@@ -7,7 +7,8 @@ __metaclass__ = type
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.api_util import (
-    SDPClient, common_argument_spec, validate_parameters, construct_endpoint
+    SDPClient, common_argument_spec, validate_parameters, construct_endpoint,
+    AUTH_MUTUALLY_EXCLUSIVE, AUTH_REQUIRED_TOGETHER
 )
 
 
@@ -81,14 +82,8 @@ def run_read_module(module_name=None, child_module_name=None):
     module = AnsibleModule(
         argument_spec=module_args,
         supports_check_mode=False,
-        mutually_exclusive=[
-            ('auth_token', 'client_id'),
-            ('auth_token', 'client_secret'),
-            ('auth_token', 'refresh_token')
-        ],
-        required_together=[
-            ('client_id', 'client_secret', 'refresh_token')
-        ]
+        mutually_exclusive=AUTH_MUTUALLY_EXCLUSIVE,
+        required_together=AUTH_REQUIRED_TOGETHER
     )
 
     if module_name:

@@ -14,7 +14,7 @@ short_description: Read API module for ManageEngine ServiceDesk Plus Cloud
 description:
   - Performs data retrieval API operations (GET) on ManageEngine ServiceDesk Plus Cloud entities.
   - Supports Requests, Problems, and Changes.
-  - Supports Parent, Child, and Grandchild module hierarchy.
+  - Supports Parent and Child module hierarchy.
 extends_documentation_fragment:
   - manageengine.sdp_cloud.sdp
 options:
@@ -49,10 +49,6 @@ options:
     description:
       - The child module name (e.g., tasks, worklog, uploads, checklists).
     type: str
-  grand_child_module_name:
-    description:
-      - The grandchild module name (e.g., comments, worklogs, uploads).
-    type: str
   parent_id:
     description:
       - The ID of the parent entity.
@@ -60,10 +56,6 @@ options:
   child_id:
     description:
       - The ID of the child entity.
-    type: str
-  grand_child_id:
-    description:
-      - The ID of the grandchild entity.
     type: str
   payload:
     description:

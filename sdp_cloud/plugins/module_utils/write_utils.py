@@ -7,7 +7,8 @@ __metaclass__ = type
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.api_util import (
-    SDPClient, common_argument_spec, validate_parameters, construct_endpoint
+    SDPClient, common_argument_spec, validate_parameters, construct_endpoint,
+    AUTH_MUTUALLY_EXCLUSIVE, AUTH_REQUIRED_TOGETHER
 )
 
 # Global Variables
@@ -19,7 +20,6 @@ def get_write_argument_spec():
     """Returns the argument spec for write modules."""
     module_args = common_argument_spec()
     module_args.update(dict(
-        operation=dict(type='str', default='Add', choices=['Add', 'Update', 'Delete']),
         payload=dict(type='dict')
     ))
     return module_args
@@ -44,14 +44,8 @@ def run_write_module(module_name=None, child_module_name=None):
     module = AnsibleModule(
         argument_spec=module_args,
         supports_check_mode=False,
-        mutually_exclusive=[
-            ('auth_token', 'client_id'),
-            ('auth_token', 'client_secret'),
-            ('auth_token', 'refresh_token')
-        ],
-        required_together=[
-            ('client_id', 'client_secret', 'refresh_token')
-        ]
+        mutually_exclusive=AUTH_MUTUALLY_EXCLUSIVE,
+        required_together=AUTH_REQUIRED_TOGETHER
     )
 
     # If module_name is provided (for specific wrappers), force it in params
@@ -67,18 +61,22 @@ def run_write_module(module_name=None, child_module_name=None):
     client = SDPClient(module)
     endpoint = construct_endpoint(module)
 
-    operation = module.params['operation']
-    method_map = {
-        'Add': 'POST',
-        'Update': 'PUT',
-        'Delete': 'DELETE'
-    }
-    method = method_map[operation]
+    # Automatic Operation Inference
+    parent_id = module.params.get('parent_id')
+    child_module = module.params.get('child_module_name')
+    child_id = module.params.get('child_id')
+
+    method = 'POST'  # Default to Create
+
+    # If updating a parent record (parent_id present, NO child module involved)
+    if parent_id and not child_module:
+        method = 'PUT'
+    # If updating a child record (child_module AND child_id present)
+    elif child_module and child_id:
+        method = 'PUT'
 
     # Construct Payload
-    data = None
-    if method in ['POST', 'PUT']:
-        data = construct_payload(module)
+    data = construct_payload(module)
 
     response = client.request(
         endpoint=endpoint,

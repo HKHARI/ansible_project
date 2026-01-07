@@ -17,6 +17,18 @@ except ImportError:
     urllib_parse = urllib
 
 
+# Auth Constants
+AUTH_MUTUALLY_EXCLUSIVE = [
+    ('auth_token', 'client_id'),
+    ('auth_token', 'client_secret'),
+    ('auth_token', 'refresh_token')
+]
+
+AUTH_REQUIRED_TOGETHER = [
+    ('client_id', 'client_secret', 'refresh_token')
+]
+
+
 def common_argument_spec():
     """Return common argument specification for SDP modules."""
     return dict(
@@ -29,10 +41,8 @@ def common_argument_spec():
         dc=dict(type='str', required=True, choices=DC_CHOICES),
         parent_module_name=dict(type='str', required=True, choices=list(MODULE_CONFIG.keys())),
         child_module_name=dict(type='str'),
-        grand_child_module_name=dict(type='str'),
         parent_id=dict(type='str'),
         child_id=dict(type='str'),
-        grand_child_id=dict(type='str'),
     )
 
 
@@ -40,23 +50,15 @@ def validate_parameters(module):
     """Validate parameter dependencies and hierarchy."""
     parent_id = module.params['parent_id']
     child_id = module.params['child_id']
-    grand_child_id = module.params['grand_child_id']
     parent_module = module.params['parent_module_name']
     child_module = module.params['child_module_name']
-    grand_child_module = module.params['grand_child_module_name']
 
     # 1. ID Dependency Validation
     if child_id and not parent_id:
         module.fail_json(msg="parent_id is required when child_id is provided.")
 
-    if grand_child_id and not (child_id and parent_id):
-        module.fail_json(msg="parent_id and child_id are required when grand_child_id is provided.")
-
     if child_module and not parent_id:
         module.fail_json(msg="parent_id is required when child_module_name is provided.")
-
-    if grand_child_module and not (child_module and child_id and parent_id):
-        module.fail_json(msg="parent_id, child_module_name, and child_id are required when grand_child_module_name is provided.")
 
     # 2. Hierarchy Validation
     parent_config = MODULE_CONFIG.get(parent_module)
@@ -68,14 +70,6 @@ def validate_parameters(module):
         if child_module not in children_config:
             module.fail_json(msg="Unsupported endpoint error: Child module '{0}' is not supported for parent '{1}'. Supported children: {2}".format(
                 child_module, parent_module, list(children_config.keys())))
-        # Validate Grandchild (if applicable)
-        if grand_child_module:
-            child_config = children_config.get(child_module)
-            grand_children_config = child_config.get('children', {})
-            if grand_child_module not in grand_children_config:
-                module.fail_json(msg="Unsupported endpoint error: Grandchild module '{0}' is not "
-                                     "supported for child '{1}'. Supported grandchildren: {2}".format(
-                                         grand_child_module, child_module, list(grand_children_config.keys())))
     return True
 
 
@@ -85,8 +79,6 @@ def construct_endpoint(module):
     parent_id = module.params['parent_id']
     child_module = module.params['child_module_name']
     child_id = module.params['child_id']
-    grand_child_module = module.params['grand_child_module_name']
-    grand_child_id = module.params['grand_child_id']
 
     # Get endpoints from config
     parent_config = MODULE_CONFIG.get(parent_module)
@@ -101,13 +93,6 @@ def construct_endpoint(module):
 
             if child_id:
                 endpoint += "/{0}".format(child_id)
-
-                if grand_child_module:
-                    grand_child_config = child_config.get('children', {}).get(grand_child_module)
-                    endpoint += "/{0}".format(grand_child_config['endpoint'])
-
-                    if grand_child_id:
-                        endpoint += "/{0}".format(grand_child_id)
 
     return endpoint
 

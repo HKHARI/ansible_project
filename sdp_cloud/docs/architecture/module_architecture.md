@@ -148,9 +148,9 @@ Structure:
     - Result Payload: `known_error_details: {"is_known_error": "true"}`
 
 ## API Request Construction
-1.  **URL**: `<domain>/app/<portal>/api/v3/<module_name>`
-2.  **Method**: GET, POST, PUT, DELETE
-3.  **Headers**:
+-  **URL**: `<domain>/app/<portal>/api/v3/<module_name>`
+-  **Method**: GET, POST, PUT, DELETE
+-  **Headers**:
     ```json
     {
         "Accept": "application/vnd.manageengine.sdp.v3+json",
@@ -158,4 +158,37 @@ Structure:
         "Authorization": "Zoho-oauthtoken <auth_token>"
     }
     ```
-4.  **Data**: `input_data=<payload>`
+-  **Data**: `input_data=<payload>`
+
+
+## Deletion as seperate module
+- Cut the deletion code from write_record module
+- Write_record no more needs operation parameter. If id is provided, it will update the record. If id is not provided, it will create a new record.
+- Create a new module called delete_record.
+    - it take parent_module_name and parent_id as parameters along with auth_token, dc, domain, portal_name, client_id, client_secret, refresh_token. 
+    - it will delete the record based on the parent_module_name and parent_id.
+
+## Support for Other Modules [Need to enhance]
+
+Support the following modules with the existing framework:
+- Request
+- Problem
+- Change
+
+### Configuration Restructuring
+- The configuration should be restructured to use **singular module names** as keys.
+- Enforce strict usage of singular keys.
+- Update all references in the codebase to match this structure.
+
+**Proposed Structure:**
+```python
+<Singular_module_name> : {
+    "endpoint" : "<endpoint>",
+    "children" : {
+        "<child_module_singular_name>" : {
+            "endpoint" : "<endpoint>",
+            "children" : {}
+        }
+    }
+}
+```

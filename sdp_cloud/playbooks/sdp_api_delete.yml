@@ -1,4 +1,4 @@
-- name: Update a Problem (PUT)
+- name: Delete a Problem (DELETE)
   hosts: localhost
   connection: local
   gather_facts: false
@@ -7,8 +7,8 @@
     - credentials.yml
 
   tasks:
-    - name: Update Problem
-      manageengine.sdp_cloud.write_record:
+    - name: Delete Problem
+      manageengine.sdp_cloud.delete_record:
         domain: "{{ domain }}"
         parent_module_name: "problem"
         parent_id: "100" # Replace with actual Problem ID
@@ -17,13 +17,9 @@
         refresh_token: "{{ refresh_token }}"
         dc: "{{ dc }}"
         portal_name: "{{ portal_name }}"
-        payload:
-          title: "Updated Title via Ansible"
-          description: "Updated description via sdp_api module"
-          urgency: "Low"
-      register: update_response
+      register: delete_response
 
-    - name: Display Update Response
+    - name: Display Delete Response
       ansible.builtin.debug:
         msg:
-          - "{{ update_response }}"
+          - "{{ delete_response }}"
