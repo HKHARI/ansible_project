@@ -16,7 +16,7 @@ This collection is ideal for IT administrators, DevOps engineers, and automation
 - **Version**: `1.0.0`
 - **Authors**: 
   - Harish Kumar <harishkumar.k@zohocorp.com>
-  - Bharath B <bharath.baskaran@zohocorp.com>
+  - Platform Team <platform@manageengine.com> 
 
 ## Installation
 
