@@ -1,6 +1,6 @@
 # Ansible Collection for ManageEngine ServiceDesk Plus Cloud
 
-The Ansible Collection for [ManageEngine ServiceDesk Plus Cloud](https://www.manageengine.com/products/service-desk/) provides Ansible content that enables users to automate the management of ITSM processes such as requests, problems, and changes.
+The Ansible Collection for [ManageEngine ServiceDesk Plus Cloud](https://www.manageengine.com/products/service-desk/) provides Ansible content that enables users to automate the management of ITSM processes such as requests, problems, changes, and releases.
 
 This collection is ideal for IT administrators, DevOps engineers, and automation specialists who work with ServiceDesk Plus Cloud and want to integrate its capabilities into their infrastructure automation workflows.
 
@@ -49,6 +49,7 @@ Here are a few common automation scenarios enabled by this collection:
 1.  **Request Management**: Automatically create, update, and query requests during CI/CD pipelines or event-driven automation.
 2.  **Problem Management**: Trigger problem records and manage their lifecycle in coordination with incident resolution.
 3.  **Change Management**: Automate the creation and update of change requests during system patching or upgrades.
+4.  **Release Management**: Automate release planning and deployment tracking.
 
 ## Modules
 
@@ -57,6 +58,7 @@ Here are a few common automation scenarios enabled by this collection:
 | [oauth_token](https://github.com/HKHARI/AnsibleCollections/blob/main/manageengine/sdp_cloud/plugins/modules/oauth_token.py) | Generate ManageEngine SDP Cloud OAuth Access Token |
 | [read_record](https://github.com/HKHARI/AnsibleCollections/blob/main/manageengine/sdp_cloud/plugins/modules/read_record.py) | Read API module for ManageEngine ServiceDesk Plus Cloud |
 | [write_record](https://github.com/HKHARI/AnsibleCollections/blob/main/manageengine/sdp_cloud/plugins/modules/write_record.py) | Write API module for ManageEngine ServiceDesk Plus Cloud |
+| [delete_record](https://github.com/HKHARI/AnsibleCollections/blob/main/manageengine/sdp_cloud/plugins/modules/delete_record.py) | Delete API module for ManageEngine ServiceDesk Plus Cloud |
 
 ## Example Usage
 
@@ -111,6 +113,21 @@ dc: "US" # Data Center (US, EU, IN, AU, CN, JP)
       description: "Users reporting slow access to file server"
       urgency: "High"
       impact: "High"
+```
+
+**Create a Release:**
+```yaml
+- name: Create a Release
+  manageengine.sdp_cloud.write_record:
+    auth_token: "{{ auth_token.access_token }}"
+    dc: "{{ dc }}"
+    domain: "sdpondemand.manageengine.com"
+    portal_name: "ithelpdesk"
+    parent_module_name: "release"
+    payload:
+      title: "Q3 Application Release"
+      description: "Rolling out new features for Q3"
+      priority: "Normal"
 ```
 
 ## Testing
