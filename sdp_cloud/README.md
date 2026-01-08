@@ -17,6 +17,8 @@ This collection is ideal for IT administrators, DevOps engineers, and automation
 - **Authors**: 
   - Harish Kumar <harishkumar.k@zohocorp.com>
   - Platform Team <platform@manageengine.com> 
+- **Support**: 
+  - SDP Cloud support <servicedeskplus-cloud-support@manageengine.com>
 
 ## Installation
 
