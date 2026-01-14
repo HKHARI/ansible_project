@@ -116,6 +116,7 @@ from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.api_util im
     SDPClient, common_argument_spec, validate_parameters, construct_endpoint,
     AUTH_MUTUALLY_EXCLUSIVE, AUTH_REQUIRED_TOGETHER
 )
+from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.errors import SDPError
 
 
 def run_delete_module():
@@ -130,29 +131,32 @@ def run_delete_module():
     )
 
     # Validation
-    validate_parameters(module)
+    try:
+        validate_parameters(module)
 
-    # Strict check for ID presence because DELETE requires an ID
-    parent_id = module.params.get('parent_id')
-    child_module = module.params.get('child_module_name')
-    child_id = module.params.get('child_id')
+        # Strict check for ID presence because DELETE requires an ID
+        parent_id = module.params.get('parent_id')
+        child_module = module.params.get('child_module_name')
+        child_id = module.params.get('child_id')
 
-    if not parent_id:
-        module.fail_json(msg="parent_id is required for deletion.")
+        if not parent_id:
+            module.fail_json(msg="parent_id is required for deletion.")
 
-    if child_module and not child_id:
-        module.fail_json(msg="child_id is required for deleting a child record.")
+        if child_module and not child_id:
+            module.fail_json(msg="child_id is required for deleting a child record.")
 
-    client = SDPClient(module)
-    endpoint = construct_endpoint(module)
-    method = 'DELETE'
+        client = SDPClient(module)
+        endpoint = construct_endpoint(module)
+        method = 'DELETE'
 
-    response = client.request(
-        endpoint=endpoint,
-        method=method
-    )
+        response = client.request(
+            endpoint=endpoint,
+            method=method
+        )
 
-    module.exit_json(changed=True, response=response)
+        module.exit_json(changed=True, response=response)
+    except SDPError as e:
+        module.fail_json(**e.to_module_fail_json_output())
 
 
 def main():

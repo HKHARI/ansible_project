@@ -10,15 +10,7 @@ from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.api_util im
     SDPClient, common_argument_spec, validate_parameters, construct_endpoint,
     AUTH_MUTUALLY_EXCLUSIVE, AUTH_REQUIRED_TOGETHER
 )
-
-
-def get_read_argument_spec():
-    """Returns the argument spec for read modules."""
-    module_args = common_argument_spec()
-    module_args.update(dict(
-        payload=dict(type='dict')
-    ))
-    return module_args
+from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.errors import SDPError
 
 
 def construct_payload(module):
@@ -77,7 +69,7 @@ def construct_payload(module):
 
 def run_read_module(module_name=None, child_module_name=None):
     """Main execution entry point for read modules."""
-    module_args = get_read_argument_spec()
+    module_args = common_argument_spec(with_payload=True)
 
     module = AnsibleModule(
         argument_spec=module_args,
@@ -92,18 +84,21 @@ def run_read_module(module_name=None, child_module_name=None):
     if child_module_name:
         module.params['child_module_name'] = child_module_name
 
-    validate_parameters(module)
+    try:
+        validate_parameters(module)
 
-    client = SDPClient(module)
-    endpoint = construct_endpoint(module)
+        client = SDPClient(module)
+        endpoint = construct_endpoint(module)
 
-    # Construct Payload
-    data = construct_payload(module)
+        # Construct Payload
+        data = construct_payload(module)
 
-    response = client.request(
-        endpoint=endpoint,
-        method='GET',
-        data=data
-    )
+        response = client.request(
+            endpoint=endpoint,
+            method='GET',
+            data=data
+        )
 
-    module.exit_json(changed=False, response=response, payload=data)
+        module.exit_json(changed=False, response=response, payload=data)
+    except SDPError as e:
+        module.fail_json(**e.to_module_fail_json_output())

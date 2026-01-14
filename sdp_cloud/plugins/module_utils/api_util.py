@@ -9,6 +9,7 @@ import json
 from ansible.module_utils.urls import fetch_url
 from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.oauth import get_access_token
 from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.sdp_config import DC_CHOICES, MODULE_CONFIG
+from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.errors import SDPError, AuthError, APIError, NetworkError, PayloadError
 
 try:
     import urllib.parse as urllib_parse
@@ -29,9 +30,9 @@ AUTH_REQUIRED_TOGETHER = [
 ]
 
 
-def common_argument_spec():
+def common_argument_spec(with_payload=False):
     """Return common argument specification for SDP modules."""
-    return dict(
+    args = dict(
         domain=dict(type='str', required=True),
         portal_name=dict(type='str', required=True),
         auth_token=dict(type='str', no_log=True),
@@ -45,6 +46,14 @@ def common_argument_spec():
         child_id=dict(type='str'),
     )
 
+    if with_payload:
+        args['payload'] = dict(type='dict')
+
+    return args
+
+
+
+
 
 def validate_parameters(module):
     """Validate parameter dependencies and hierarchy."""
@@ -55,22 +64,74 @@ def validate_parameters(module):
 
     # 1. ID Dependency Validation
     if child_id and not parent_id:
-        module.fail_json(msg="parent_id is required when child_id is provided.")
+        raise SDPError("parent_id is required when child_id is provided.")
 
     if child_module and not parent_id:
-        module.fail_json(msg="parent_id is required when child_module_name is provided.")
+        raise SDPError("parent_id is required when child_module_name is provided.")
 
     # 2. Hierarchy Validation
     parent_config = MODULE_CONFIG.get(parent_module)
     if not parent_config:
-        module.fail_json(msg="Invalid parent_module_name: {0}".format(parent_module))
+        raise SDPError("Invalid parent_module_name: {0}".format(parent_module))
 
     if child_module:
         children_config = parent_config.get('children', {})
         if child_module not in children_config:
-            module.fail_json(msg="Unsupported endpoint error: Child module '{0}' is not supported for parent '{1}'. Supported children: {2}".format(
+            raise SDPError("Unsupported endpoint error: Child module '{0}' is not supported for parent '{1}'. Supported children: {2}".format(
                 child_module, parent_module, list(children_config.keys())))
     return True
+
+
+def validate_payload_fields(module, payload, parent_module, client, child_module=None):
+    """
+    Validate payload fields against supported fields in configuration.
+    Also handles UDF validation (allowed in parent, forbidden in child).
+    Checks UDFs against metadata using the provided client.
+    """
+    if not payload:
+        return
+
+    # Get configuration key
+    parent_config = MODULE_CONFIG.get(parent_module)
+    if not parent_config:
+        raise PayloadError("Invalid parent module: {0}".format(parent_module))
+
+    supported_fields = []
+    if child_module:
+        child_config = parent_config.get('children', {}).get(child_module)
+        if not child_config:
+            raise PayloadError("Invalid child module: {0}".format(child_module))
+        supported_fields = child_config.get('supported_payload_fields', [])
+    else:
+        supported_fields = parent_config.get('supported_payload_fields', [])
+
+    # Separate UDFs from standard fields
+    udf_fields_in_payload = []
+    
+    for field in payload.keys():
+        if field in supported_fields:
+            continue
+
+        if field.startswith('udf_'):
+            if child_module:
+                raise PayloadError("UDFs are not supported for child module '{0}'. Field: {1}".format(child_module, field))
+            udf_fields_in_payload.append(field)
+        else:
+            raise PayloadError("Unsupported payload field '{0}' for module '{1}' (child: {2}). Supported fields: {3}".format(
+                field, parent_module, child_module, supported_fields))
+
+    # Validate UDFs against metadata if present
+    if udf_fields_in_payload:
+        module.debug("Validating UDFs: {0}".format(udf_fields_in_payload))
+        # fetch_udf_metadata is defined later in this file, so we can call it if it's in scope, 
+        # but Python functions are objects. Safe to call if defined in module scope.
+        # We need to ensure fetch_udf_metadata is defined or available.
+        # It is defined at the end of the file.
+        valid_udfs = fetch_udf_metadata(module, client)
+        
+        for udf in udf_fields_in_payload:
+            if udf not in valid_udfs:
+                 raise PayloadError("Invalid UDF field '{0}'. It does not exist in the module metadata.".format(udf))
 
 
 def construct_endpoint(module):
@@ -121,8 +182,8 @@ class SDPClient:
                 token_data = get_access_token(self.module, self.client_id, self.client_secret, self.refresh_token, self.dc)
                 self.auth_token = token_data['access_token']
             else:
-                self.module.fail_json(msg="Missing authentication credentials. Provide either 'auth_token' or "
-                                      "('client_id', 'client_secret', 'refresh_token').")
+                raise AuthError("Missing authentication credentials. Provide either 'auth_token' or "
+                                "('client_id', 'client_secret', 'refresh_token').")
 
         url = "{0}/{1}".format(self.base_url, endpoint)
 
@@ -136,16 +197,20 @@ class SDPClient:
             payload = urllib_parse.urlencode({'input_data': json.dumps(data)})
             headers['Content-Type'] = 'application/x-www-form-urlencoded'
 
-        response, info = fetch_url(
-            self.module,
-            url,
-            data=payload,
-            method=method,
-            headers=headers
-        )
+        try:
+            response, info = fetch_url(
+                self.module,
+                url,
+                data=payload,
+                method=method,
+                headers=headers
+            )
+        except Exception as e:
+            raise NetworkError("Failed to connect to SDP Cloud API: {0}".format(str(e)), original_exception=e)
 
         if not response:
-            _handle_error(self.module, info, "API Request Failed")
+            error_msg, details = _get_error_details(info, "API Request Failed")
+            raise APIError(info.get('status'), error_msg, details)
 
         body = response.read()
         if not body:
@@ -154,12 +219,14 @@ class SDPClient:
         try:
             return json.loads(body)
         except ValueError:
-            self.module.fail_json(msg="Invalid JSON response from SDP API", raw_response=body)
+            raise SDPError("Invalid JSON response from SDP API. Raw response: {0}".format(body))
 
 
-def _handle_error(module, info, default_msg):
+def _get_error_details(info, default_msg):
+    """Extract error message and details from response info."""
     error_msg = info.get('msg', default_msg)
     response_body = info.get('body')
+    details = response_body
 
     if response_body:
         try:
@@ -174,7 +241,7 @@ def _handle_error(module, info, default_msg):
         except ValueError:
             pass
 
-    module.fail_json(msg=error_msg, status=info.get('status'), error_details=response_body)
+    return error_msg, details
 
 
 def fetch_udf_metadata(module, client):
@@ -195,12 +262,12 @@ def fetch_udf_metadata(module, client):
     response = client.request(endpoint, method='GET')
 
     if not response:
-        module.fail_json(msg="Failed to fetch metadata for module '{0}'".format(parent_module))
+        raise SDPError("Failed to fetch metadata for module '{0}'".format(parent_module))
 
     try:
         # Navigate the response structure: metainfo -> fields -> udf_fields
         if 'response_status' in response and response['response_status']['status_code'] != 2000:
-            module.fail_json(msg="Metadata fetch failed: {0}".format(response))
+            raise SDPError("Metadata fetch failed: {0}".format(response))
 
         meta_data = response.get('metainfo', {})
         if not meta_data:
@@ -213,5 +280,5 @@ def fetch_udf_metadata(module, client):
         module.debug("Fetched {0} UDF definitions".format(len(udf_fields_metadata)))
         return udf_fields_metadata
     except Exception as e:
-        module.fail_json(msg="Error parsing UDF metadata: {0}".format(str(e)))
-        return {}
+        raise SDPError("Error parsing UDF metadata: {0}".format(str(e)))
+
