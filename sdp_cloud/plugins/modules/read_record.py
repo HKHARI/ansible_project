@@ -44,7 +44,7 @@ options:
       - The parent module name (e.g., requests, problems, changes).
     type: str
     required: true
-    choices: [request, problem, change]
+    choices: [request, problem, change, release]
   child_module_name:
     description:
       - The child module name (e.g., tasks, worklog, uploads, checklists).

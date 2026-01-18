@@ -1,6 +1,4 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 # Copyright: (c) 2024, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -14,7 +12,6 @@ short_description: Delete API module for ManageEngine ServiceDesk Plus Cloud
 description:
   - This module deletes records in ManageEngine ServiceDesk Plus Cloud.
   - It handles HTTP DELETE requests for specified modules and IDs.
-version_added: "1.0.0"
 author:
   - Harish Kumar (@HKHARI)
 options:
@@ -28,6 +25,7 @@ options:
       - The name of the parent module (e.g., request, problem, change).
     required: true
     type: str
+    choices: [request, problem, change, release]
   parent_id:
     description:
       - The ID of the parent record to delete.
@@ -42,48 +40,40 @@ options:
     description:
       - The ID of the child record to delete.
       - Required if I(child_module_name) is provided.
-    required: false
     type: str
   client_id:
     description:
       - The OAuth Client ID.
       - Required if I(auth_token) is not provided.
-    required: false
     type: str
   client_secret:
     description:
       - The OAuth Client Secret.
       - Required if I(auth_token) is not provided.
-    required: false
     type: str
   refresh_token:
     description:
       - The OAuth Refresh Token.
       - Required if I(auth_token) is not provided.
-    required: false
     type: str
   auth_token:
     description:
       - The OAuth Access Token.
       - Required if I(client_id), I(client_secret), and I(refresh_token) are not provided.
-    required: false
     type: str
   dc:
     description:
-      - The Data Center of the SDP Cloud instance.
-      - Choices: US, EU, IN, AU, CN, JP, CA, SA.
-    required: true
+      - The Data Center location (e.g., US, EU).
     type: str
-    choices: [ US, EU, IN, AU, CN, JP, CA, SA ]
+    required: true
+    choices: [US, EU, IN, AU, CN, JP, CA, SA]
   portal_name:
     description:
-      - The name of the portal (e.g., ithelpdesk).
-      - Default is 'ithelpdesk'.
-    required: false
+      - The portal name (e.g., ithelpdesk).
     type: str
-    default: "ithelpdesk"
+    required: true
 extends_documentation_fragment:
-  - manageengine.sdp_cloud.sdp_cloud
+  - manageengine.sdp_cloud.sdp
 '''
 
 EXAMPLES = r'''
@@ -118,11 +108,6 @@ response:
     response_status:
       status: "success"
       status_code: 2000
-    list_info:
-       row_count: 0
-       start_index: 0
-       has_more_rows: false
-       total_count: 0
 '''
 
 from ansible.module_utils.basic import AnsibleModule
