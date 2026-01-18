@@ -13,7 +13,7 @@ author:
 short_description: Read API module for ManageEngine ServiceDesk Plus Cloud
 description:
   - Performs data retrieval API operations (GET) on ManageEngine ServiceDesk Plus Cloud entities.
-  - Supports Requests, Problems, and Changes.
+  - Supports Requests, Problems, Changes, and Releases.
   - Supports Parent and Child module hierarchy.
 extends_documentation_fragment:
   - manageengine.sdp_cloud.sdp
@@ -41,7 +41,7 @@ options:
     type: str
   parent_module_name:
     description:
-      - The parent module name (e.g., requests, problems, changes).
+      - The parent module name (e.g., requests, problems, changes, releases).
     type: str
     required: true
     choices: [request, problem, change, release]

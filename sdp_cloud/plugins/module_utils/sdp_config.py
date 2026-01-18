@@ -69,5 +69,22 @@ MODULE_CONFIG = {
                 'children': {}
             }
         }
+    },
+    'release': {
+        'endpoint': 'releases',
+        'children': {
+            'note': {
+                'endpoint': 'notes',
+                'children': {}
+            },
+            'worklog': {
+                'endpoint': 'worklogs',
+                'children': {}
+            },
+            'task': {
+                'endpoint': 'tasks',
+                'children': {}
+            }
+        }
     }
 }

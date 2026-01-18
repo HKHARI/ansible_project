@@ -22,7 +22,7 @@ options:
     type: str
   parent_module_name:
     description:
-      - The name of the parent module (e.g., request, problem, change).
+      - The name of the parent module (e.g., request, problem, change, release).
     required: true
     type: str
     choices: [request, problem, change, release]
