@@ -63,7 +63,6 @@ options:
     description:
       - The input data for the API request.
     type: dict
-    required: true
 '''
 
 EXAMPLES = r'''

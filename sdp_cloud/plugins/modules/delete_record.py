@@ -22,14 +22,13 @@ options:
     type: str
   parent_module_name:
     description:
-      - The name of the parent module (e.g., request, problem, change, release).
+      - The name of the parent module.
     required: true
     type: str
     choices: [request, problem, change, release]
   parent_id:
     description:
       - The ID of the parent record to delete.
-    required: true
     type: str
   child_module_name:
     description:
