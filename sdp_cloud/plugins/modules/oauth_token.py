@@ -17,7 +17,6 @@ description:
   - The access token is valid for 1 hour.
 extends_documentation_fragment:
   - manageengine.sdp_cloud.sdp
-version_added: '1.0.0'
 options:
   client_id:
     description:
@@ -43,21 +42,13 @@ options:
 '''
 
 EXAMPLES = r'''
-# Best Practice: Store sensitive values like client_secret and refresh_token
-# in an Ansible Vault file (e.g., vault.yml) or pass them as environment variables.
-# Do not commit secrets directly to your playbook source code.
-
 - name: Generate Access Token using Vaulted Variables
   manageengine.sdp_cloud.oauth_token:
-    # Defined in vault.yml
     client_id: "{{ sdp_client_id }}"
-    # Defined in vault.yml
     client_secret: "{{ sdp_client_secret }}"
-    # Defined in vault.yml
     refresh_token: "{{ sdp_refresh_token }}"
     dc: "US"
   register: auth_response
-  # Prevent outputting the token to logs
   no_log: true
 
 - name: Use the token in subsequent tasks

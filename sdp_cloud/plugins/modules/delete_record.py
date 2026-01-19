@@ -1,6 +1,4 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 # Copyright: (c) 2024, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -24,13 +22,13 @@ options:
     type: str
   parent_module_name:
     description:
-      - The name of the parent module (e.g., request, problem, change, release).
+      - The name of the parent module.
     required: true
     type: str
+    choices: [request, problem, change, release]
   parent_id:
     description:
       - The ID of the parent record to delete.
-    required: true
     type: str
   child_module_name:
     description:
@@ -63,7 +61,7 @@ options:
       - Required if I(client_id), I(client_secret), and I(refresh_token) are not provided.
     type: str
   dc:
-     description:
+    description:
       - The Data Center location (e.g., US, EU).
     type: str
     required: true
@@ -74,7 +72,7 @@ options:
     type: str
     required: true
 extends_documentation_fragment:
-  - manageengine.sdp_cloud.sdp_cloud
+  - manageengine.sdp_cloud.sdp
 '''
 
 EXAMPLES = r'''

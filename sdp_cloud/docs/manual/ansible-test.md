@@ -14,7 +14,7 @@
    
 ```bash
     $ cd {...}/ansible_Collections/{namespace}/{Collection_name}/ #navigate to Collection
-    $ ansible-test sanity --docker default # if dependencies aren’t installed [Recommended]
+    $ ansible-test sanity --docker default # if dependencies aren't installed [Recommended]
 
     #Specific Sanity Test
     $ ansible-test sanity   # run all sanity tests 
