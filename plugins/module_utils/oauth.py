@@ -8,6 +8,8 @@ __metaclass__ = type
 import json
 from ansible.module_utils.urls import fetch_url
 from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.sdp_config import DC_MAP
+from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.error_handler import handle_error
+
 
 try:
     import urllib.parse as urllib_parse
@@ -44,7 +46,7 @@ def get_access_token(module, client_id, client_secret, refresh_token, dc):
     )
 
     if not response:
-        _handle_error(module, info, "Failed to generate Access Token")
+        handle_error(module, info, "Failed to generate Access Token")
 
     try:
         data = json.loads(response.read())
@@ -56,20 +58,3 @@ def get_access_token(module, client_id, client_secret, refresh_token, dc):
         module.fail_json(msg="Invalid JSON response from Auth Server")
 
     module.fail_json(msg="Unknown error during token generation", response=data)
-
-
-def _handle_error(module, info, default_msg):
-    error_msg = info.get('msg', default_msg)
-    if 'body' in info:
-        try:
-            err_body = json.loads(info['body'])
-            # SDP Cloud V3 API Error Structure
-            if 'response_status' in err_body:
-                msgs = err_body['response_status'].get('messages', [])
-                if msgs:
-                    error_msg = "{0}: {1}".format(msgs[0].get('status_code'), msgs[0].get('message'))
-            else:
-                error_msg = err_body.get('error', error_msg)
-        except ValueError:
-            pass
-    module.fail_json(msg=error_msg, status=info['status'])

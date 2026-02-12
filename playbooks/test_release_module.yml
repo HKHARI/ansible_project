@@ -1,0 +1,110 @@
+- name: Test All Modules - Release Lifecycle
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars_files:
+    - credentials.yml
+
+  tasks:
+    # Step 1: OAuth Token
+    - name: Fetch OAuth Token
+      manageengine.sdp_cloud.oauth_token:
+        client_id: "{{ client_id }}"
+        client_secret: "{{ client_secret }}"
+        refresh_token: "{{ refresh_token }}"
+        dc: "{{ dc }}"
+      register: token_output
+
+    # Step 2: Create a Release
+    - name: Create a Release
+      manageengine.sdp_cloud.write_record:
+        domain: "{{ domain }}"
+        parent_module_name: "release"
+        auth_token: "{{ token_output.access_token }}"
+        dc: "{{ dc }}"
+        portal_name: "{{ portal_name }}"
+        payload:
+          title: "Test Release - Lifecycle Script"
+          description: "Created via test_release_module playbook"
+          priority: "High"
+      register: created_release
+
+    - name: Display Created Release
+      ansible.builtin.debug:
+        msg:
+          - "ID: {{ created_release.response.release.id }}"
+          - "Title: {{ created_release.response.release.title }}"
+
+    # Step 3: Update the same Release
+    - name: Update the Release
+      manageengine.sdp_cloud.write_record:
+        domain: "{{ domain }}"
+        parent_module_name: "release"
+        parent_id: "{{ created_release.response.release.id }}"
+        auth_token: "{{ token_output.access_token }}"
+        dc: "{{ dc }}"
+        portal_name: "{{ portal_name }}"
+        payload:
+          title: "Test Release - Updated"
+          priority: "Low"
+      register: updated_release
+
+    - name: Display Updated Release
+      ansible.builtin.debug:
+        msg:
+          - "ID: {{ updated_release.response.release.id }}"
+          - "Title: {{ updated_release.response.release.title }}"
+
+    # Step 4: Get releases without ID (list)
+    - name: Get Releases (List)
+      manageengine.sdp_cloud.read_record:
+        domain: "{{ domain }}"
+        parent_module_name: "release"
+        auth_token: "{{ token_output.access_token }}"
+        dc: "{{ dc }}"
+        portal_name: "{{ portal_name }}"
+        payload:
+          row_count: 1
+          sort_field: "created_time"
+          sort_order: "desc"
+      register: list_releases
+
+    - name: Display Release List
+      ansible.builtin.debug:
+        msg: "ID: {{ item.id }} | Title: {{ item.title }}"
+      loop: "{{ list_releases.response.releases }}"
+      loop_control:
+        label: "Release {{ item.id }}"
+
+    # Step 5: Get the same release by ID
+    - name: Get Release by ID
+      manageengine.sdp_cloud.read_record:
+        domain: "{{ domain }}"
+        parent_module_name: "release"
+        parent_id: "{{ created_release.response.release.id }}"
+        auth_token: "{{ token_output.access_token }}"
+        dc: "{{ dc }}"
+        portal_name: "{{ portal_name }}"
+      register: get_release
+
+    - name: Display Release Details
+      ansible.builtin.debug:
+        msg:
+          - "ID: {{ get_release.response.release.id }}"
+          - "Title: {{ get_release.response.release.title }}"
+
+    # Step 6: Delete the release we created
+    - name: Delete the Release
+      manageengine.sdp_cloud.delete_record:
+        domain: "{{ domain }}"
+        parent_module_name: "release"
+        parent_id: "{{ created_release.response.release.id }}"
+        auth_token: "{{ token_output.access_token }}"
+        dc: "{{ dc }}"
+        portal_name: "{{ portal_name }}"
+      register: delete_result
+
+    - name: Display Delete Result
+      ansible.builtin.debug:
+        msg: "Release {{ created_release.response.release.id }} deleted successfully."

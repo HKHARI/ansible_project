@@ -10,6 +10,7 @@ from ansible.module_utils.urls import fetch_url
 from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.oauth import get_access_token
 from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.sdp_config import DC_CHOICES, MODULE_CONFIG
 
+from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.error_handler import handle_error
 try:
     import urllib.parse as urllib_parse
 except ImportError:
@@ -40,45 +41,26 @@ def common_argument_spec():
         refresh_token=dict(type='str', no_log=True),
         dc=dict(type='str', required=True, choices=DC_CHOICES),
         parent_module_name=dict(type='str', required=True, choices=list(MODULE_CONFIG.keys())),
-        child_module_name=dict(type='str'),
         parent_id=dict(type='str'),
-        child_id=dict(type='str'),
     )
 
 
 def validate_parameters(module):
     """Validate parameter dependencies and hierarchy."""
-    parent_id = module.params['parent_id']
-    child_id = module.params['child_id']
     parent_module = module.params['parent_module_name']
-    child_module = module.params['child_module_name']
 
-    # 1. ID Dependency Validation
-    if child_id and not parent_id:
-        module.fail_json(msg="parent_id is required when child_id is provided.")
-
-    if child_module and not parent_id:
-        module.fail_json(msg="parent_id is required when child_module_name is provided.")
-
-    # 2. Hierarchy Validation
+    # Hierarchy Validation
     parent_config = MODULE_CONFIG.get(parent_module)
     if not parent_config:
         module.fail_json(msg="Invalid parent_module_name: {0}".format(parent_module))
 
-    if child_module:
-        children_config = parent_config.get('children', {})
-        if child_module not in children_config:
-            module.fail_json(msg="Unsupported endpoint error: Child module '{0}' is not supported for parent '{1}'. Supported children: {2}".format(
-                child_module, parent_module, list(children_config.keys())))
     return True
 
 
-def construct_endpoint(module):
+def construct_endpoint(module, operation=None):
     """Construct the API endpoint based on hierarchy."""
     parent_module = module.params['parent_module_name']
-    parent_id = module.params['parent_id']
-    child_module = module.params['child_module_name']
-    child_id = module.params['child_id']
+    parent_id = module.params.get('parent_id')
 
     # Get endpoints from config
     parent_config = MODULE_CONFIG.get(parent_module)
@@ -87,12 +69,9 @@ def construct_endpoint(module):
     if parent_id:
         endpoint += "/{0}".format(parent_id)
 
-        if child_module:
-            child_config = parent_config['children'].get(child_module)
-            endpoint += "/{0}".format(child_config['endpoint'])
-
-            if child_id:
-                endpoint += "/{0}".format(child_id)
+    # Append convenience operation at the deepest level
+    if operation:
+        endpoint += "/{0}".format(operation)
 
     return endpoint
 
@@ -144,74 +123,44 @@ class SDPClient:
             headers=headers
         )
 
+        status_code = info.get('status', -1)
+
+        # On HTTP error, fetch_url sets response=None but puts error body in info['body']
         if not response:
-            _handle_error(self.module, info, "API Request Failed")
+            error_body = info.get('body', '')
+            if error_body:
+                try:
+                    err_json = json.loads(error_body)
+                    # Return the parsed error so callers can inspect it
+                    handle_error(self.module, info, "API Request Failed")
+                except ValueError:
+                    handle_error(self.module, info, "API Request Failed")
+            else:
+                handle_error(self.module, info, "API Request Failed")
 
         body = response.read()
         if not body:
-            return {"status": info.get('status'), "msg": "Empty response body", "headers": info.get('headers')}
+            return {"status": status_code, "msg": "Empty response body"}
 
         try:
-            return json.loads(body)
+            result = json.loads(body)
         except ValueError:
             self.module.fail_json(msg="Invalid JSON response from SDP API", raw_response=body)
 
+        # Check for API-level errors even on HTTP 200
+        if isinstance(result, dict):
+            resp_status = result.get('response_status', {})
+            if isinstance(resp_status, dict) and resp_status.get('status_code', 2000) >= 4000:
+                self.module.fail_json(
+                    msg="{0}".format(resp_status.get('messages', [{}])[0].get('message', 'API Error')),
+                    status=resp_status.get('status_code'),
+                    response=result
+                )
 
-def _handle_error(module, info, default_msg):
-    error_msg = info.get('msg', default_msg)
-    response_body = info.get('body')
-
-    if response_body:
-        try:
-            err_body = json.loads(response_body)
-            # SDP Cloud V3 API Error Structure
-            if 'response_status' in err_body:
-                msgs = err_body['response_status'].get('messages', [])
-                if msgs:
-                    error_msg = "{0}: {1}".format(msgs[0].get('status_code'), msgs[0].get('message'))
-            else:
-                error_msg = err_body.get('error', error_msg)
-        except ValueError:
-            pass
-
-    module.fail_json(msg=error_msg, status=info.get('status'), error_details=response_body)
+        return result
 
 
-def fetch_udf_metadata(module, client):
-    """
-    Fetch UDF metadata from the API.
-    Returns a dictionary of UDF fields and their configurations.
-    """
-    parent_module = module.params['parent_module_name']
 
-    # Construct URL for _metainfo
-    # URL: <domain>/app/<portal>/api/v3/<parent_module_endpoint>/_metainfo
-    parent_config = MODULE_CONFIG.get(parent_module)
-    endpoint_name = parent_config.get('endpoint')
-    endpoint = "{0}/_metainfo".format(endpoint_name)
 
-    module.debug("Fetching UDF metadata from: {0}".format(endpoint))
 
-    response = client.request(endpoint, method='GET')
 
-    if not response:
-        module.fail_json(msg="Failed to fetch metadata for module '{0}'".format(parent_module))
-
-    try:
-        # Navigate the response structure: metainfo -> fields -> udf_fields
-        if 'response_status' in response and response['response_status']['status_code'] != 2000:
-            module.fail_json(msg="Metadata fetch failed: {0}".format(response))
-
-        meta_data = response.get('metainfo', {})
-        if not meta_data:
-            # Fallback or check if it's directly in response (some APIs differ)
-            meta_data = response
-
-        fields = meta_data.get('fields', {})
-        udf_container = fields.get('udf_fields', {})
-        udf_fields_metadata = udf_container.get('fields', {})
-        module.debug("Fetched {0} UDF definitions".format(len(udf_fields_metadata)))
-        return udf_fields_metadata
-    except Exception as e:
-        module.fail_json(msg="Error parsing UDF metadata: {0}".format(str(e)))
-        return {}

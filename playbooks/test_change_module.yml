@@ -1,0 +1,110 @@
+- name: Test All Modules - Change Lifecycle
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars_files:
+    - credentials.yml
+
+  tasks:
+    # Step 1: OAuth Token
+    - name: Fetch OAuth Token
+      manageengine.sdp_cloud.oauth_token:
+        client_id: "{{ client_id }}"
+        client_secret: "{{ client_secret }}"
+        refresh_token: "{{ refresh_token }}"
+        dc: "{{ dc }}"
+      register: token_output
+
+    # Step 2: Create a Change
+    - name: Create a Change
+      manageengine.sdp_cloud.write_record:
+        domain: "{{ domain }}"
+        parent_module_name: "change"
+        auth_token: "{{ token_output.access_token }}"
+        dc: "{{ dc }}"
+        portal_name: "{{ portal_name }}"
+        payload:
+          title: "Test Change - Lifecycle Script"
+          description: "Created via test_change_module playbook"
+          priority: "High"
+      register: created_change
+
+    - name: Display Created Change
+      ansible.builtin.debug:
+        msg:
+          - "ID: {{ created_change.response.change.id }}"
+          - "Title: {{ created_change.response.change.title }}"
+
+    # Step 3: Update the same Change
+    - name: Update the Change
+      manageengine.sdp_cloud.write_record:
+        domain: "{{ domain }}"
+        parent_module_name: "change"
+        parent_id: "{{ created_change.response.change.id }}"
+        auth_token: "{{ token_output.access_token }}"
+        dc: "{{ dc }}"
+        portal_name: "{{ portal_name }}"
+        payload:
+          title: "Test Change - Updated"
+          priority: "Low"
+      register: updated_change
+
+    - name: Display Updated Change
+      ansible.builtin.debug:
+        msg:
+          - "ID: {{ updated_change.response.change.id }}"
+          - "Title: {{ updated_change.response.change.title }}"
+
+    # Step 4: Get changes without ID (list)
+    - name: Get Changes (List)
+      manageengine.sdp_cloud.read_record:
+        domain: "{{ domain }}"
+        parent_module_name: "change"
+        auth_token: "{{ token_output.access_token }}"
+        dc: "{{ dc }}"
+        portal_name: "{{ portal_name }}"
+        payload:
+          row_count: 1
+          sort_field: "created_time"
+          sort_order: "desc"
+      register: list_changes
+
+    - name: Display Change List
+      ansible.builtin.debug:
+        msg: "ID: {{ item.id }} | Title: {{ item.title }}"
+      loop: "{{ list_changes.response.changes }}"
+      loop_control:
+        label: "Change {{ item.id }}"
+
+    # Step 5: Get the same change by ID
+    - name: Get Change by ID
+      manageengine.sdp_cloud.read_record:
+        domain: "{{ domain }}"
+        parent_module_name: "change"
+        parent_id: "{{ created_change.response.change.id }}"
+        auth_token: "{{ token_output.access_token }}"
+        dc: "{{ dc }}"
+        portal_name: "{{ portal_name }}"
+      register: get_change
+
+    - name: Display Change Details
+      ansible.builtin.debug:
+        msg:
+          - "ID: {{ get_change.response.change.id }}"
+          - "Title: {{ get_change.response.change.title }}"
+
+    # Step 6: Delete the change we created
+    - name: Delete the Change
+      manageengine.sdp_cloud.delete_record:
+        domain: "{{ domain }}"
+        parent_module_name: "change"
+        parent_id: "{{ created_change.response.change.id }}"
+        auth_token: "{{ token_output.access_token }}"
+        dc: "{{ dc }}"
+        portal_name: "{{ portal_name }}"
+      register: delete_result
+
+    - name: Display Delete Result
+      ansible.builtin.debug:
+        msg: "Change {{ created_change.response.change.id }} deleted successfully."

@@ -1,0 +1,110 @@
+- name: Test All Modules - Request Lifecycle
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars_files:
+    - credentials.yml
+
+  tasks:
+    # Step 1: OAuth Token
+    - name: Fetch OAuth Token
+      manageengine.sdp_cloud.oauth_token:
+        client_id: "{{ client_id }}"
+        client_secret: "{{ client_secret }}"
+        refresh_token: "{{ refresh_token }}"
+        dc: "{{ dc }}"
+      register: token_output
+
+    # Step 2: Create a Request
+    - name: Create a Request
+      manageengine.sdp_cloud.write_record:
+        domain: "{{ domain }}"
+        parent_module_name: "request"
+        auth_token: "{{ token_output.access_token }}"
+        dc: "{{ dc }}"
+        portal_name: "{{ portal_name }}"
+        payload:
+          subject: "Test Request - Lifecycle Script"
+          description: "Created via test_request_module playbook"
+          priority: "High"
+      register: created_request
+
+    - name: Display Created Request
+      ansible.builtin.debug:
+        msg:
+          - "ID: {{ created_request.response.request.id }}"
+          - "Subject: {{ created_request.response.request.subject }}"
+
+    # Step 3: Update the same Request
+    - name: Update the Request
+      manageengine.sdp_cloud.write_record:
+        domain: "{{ domain }}"
+        parent_module_name: "request"
+        parent_id: "{{ created_request.response.request.id }}"
+        auth_token: "{{ token_output.access_token }}"
+        dc: "{{ dc }}"
+        portal_name: "{{ portal_name }}"
+        payload:
+          subject: "Test Request - Updated"
+          priority: "Low"
+      register: updated_request
+
+    - name: Display Updated Request
+      ansible.builtin.debug:
+        msg:
+          - "ID: {{ updated_request.response.request.id }}"
+          - "Subject: {{ updated_request.response.request.subject }}"
+
+    # Step 4: Get requests without ID (list)
+    - name: Get Requests (List)
+      manageengine.sdp_cloud.read_record:
+        domain: "{{ domain }}"
+        parent_module_name: "request"
+        auth_token: "{{ token_output.access_token }}"
+        dc: "{{ dc }}"
+        portal_name: "{{ portal_name }}"
+        payload:
+          row_count: 1
+          sort_field: "created_time"
+          sort_order: "desc"
+      register: list_requests
+
+    - name: Display Request List
+      ansible.builtin.debug:
+        msg: "ID: {{ item.id }} | Subject: {{ item.subject }}"
+      loop: "{{ list_requests.response.requests }}"
+      loop_control:
+        label: "Request {{ item.id }}"
+
+    # Step 5: Get the same request by ID
+    - name: Get Request by ID
+      manageengine.sdp_cloud.read_record:
+        domain: "{{ domain }}"
+        parent_module_name: "request"
+        parent_id: "{{ created_request.response.request.id }}"
+        auth_token: "{{ token_output.access_token }}"
+        dc: "{{ dc }}"
+        portal_name: "{{ portal_name }}"
+      register: get_request
+
+    - name: Display Request Details
+      ansible.builtin.debug:
+        msg:
+          - "ID: {{ get_request.response.request.id }}"
+          - "Subject: {{ get_request.response.request.subject }}"
+
+    # Step 6: Delete the request we created
+    - name: Delete the Request
+      manageengine.sdp_cloud.delete_record:
+        domain: "{{ domain }}"
+        parent_module_name: "request"
+        parent_id: "{{ created_request.response.request.id }}"
+        auth_token: "{{ token_output.access_token }}"
+        dc: "{{ dc }}"
+        portal_name: "{{ portal_name }}"
+      register: delete_result
+
+    - name: Display Delete Result
+      ansible.builtin.debug:
+        msg: "Request {{ created_request.response.request.id }} deleted successfully."

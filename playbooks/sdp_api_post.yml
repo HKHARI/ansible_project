@@ -10,19 +10,21 @@
     - name: Create a Problem
       manageengine.sdp_cloud.write_record:
         domain: "{{ domain }}"
-        parent_module_name: "problem"
+        parent_module_name: "request"
         client_id: "{{ client_id }}"
         client_secret: "{{ client_secret }}"
         refresh_token: "{{ refresh_token }}"
         dc: "{{ dc }}"
         portal_name: "{{ portal_name }}"
         payload:
-          title: "New problem from Ansible New modulare version"
+          subject: "New problem from Ansible New modulare version"
           description: "Created via sdp_api module"
           priority: "High"
+          
       register: new_problem
 
     - name: Display Problem Data
       ansible.builtin.debug:
         msg:
-          - "{{ new_problem }}"
+          - "ID: {{ new_problem}}"
+          

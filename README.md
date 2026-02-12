@@ -111,6 +111,7 @@ dc: "US" # Data Center (US, EU, IN, AU, CN, JP)
     parent_module_name: "request"
     parent_id: "100"
     auth_token: "{{ auth_token.access_token }}"
+    dc: "{{ dc }}"
     portal_name: "ithelpdesk"
 ```
 
@@ -123,12 +124,26 @@ dc: "US" # Data Center (US, EU, IN, AU, CN, JP)
     domain: "sdpondemand.manageengine.com"
     portal_name: "ithelpdesk"
     parent_module_name: "problem"
-    operation: "Add"
     payload:
       title: "Network Latency Issue"
       description: "Users reporting slow access to file server"
       urgency: "High"
       impact: "High"
+```
+
+**Update a Problem:**
+```yaml
+- name: Update a Problem
+  manageengine.sdp_cloud.write_record:
+    auth_token: "{{ auth_token.access_token }}"
+    dc: "{{ dc }}"
+    domain: "sdpondemand.manageengine.com"
+    portal_name: "ithelpdesk"
+    parent_module_name: "problem"
+    parent_id: "100"
+    payload:
+      title: "Updated Title"
+      priority: "High"
 ```
 
 **Create a Release:**
@@ -144,6 +159,18 @@ dc: "US" # Data Center (US, EU, IN, AU, CN, JP)
       title: "Q3 Application Release"
       description: "Rolling out new features for Q3"
       priority: "Normal"
+```
+
+**Delete a Problem:**
+```yaml
+- name: Delete a Problem
+  manageengine.sdp_cloud.delete_record:
+    auth_token: "{{ auth_token.access_token }}"
+    dc: "{{ dc }}"
+    domain: "sdpondemand.manageengine.com"
+    portal_name: "ithelpdesk"
+    parent_module_name: "problem"
+    parent_id: "100"
 ```
 
 ## Testing

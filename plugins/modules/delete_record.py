@@ -28,18 +28,9 @@ options:
     choices: [request, problem, change, release]
   parent_id:
     description:
-      - The ID of the parent record to delete.
+      - The ID of the record to delete.
     type: str
-  child_module_name:
-    description:
-      - The name of the child module (e.g., note, worklog, task).
-    required: false
-    type: str
-  child_id:
-    description:
-      - The ID of the child record to delete.
-      - Required if I(child_module_name) is provided.
-    type: str
+    required: true
   client_id:
     description:
       - The OAuth Client ID.
@@ -86,16 +77,6 @@ EXAMPLES = r'''
     refresh_token: "your_refresh_token"
     dc: "US"
     portal_name: "ithelpdesk"
-
-- name: Delete a Request Note
-  manageengine.sdp_cloud.delete_record:
-    auth_token: "valid_access_token"
-    dc: "EU"
-    domain: "sdp.zoho.eu"
-    parent_module_name: "request"
-    parent_id: "500"
-    child_module_name: "note"
-    child_id: "10"
 '''
 
 RETURN = r'''
@@ -132,14 +113,9 @@ def run_delete_module():
 
     # Strict check for ID presence because DELETE requires an ID
     parent_id = module.params.get('parent_id')
-    child_module = module.params.get('child_module_name')
-    child_id = module.params.get('child_id')
 
     if not parent_id:
         module.fail_json(msg="parent_id is required for deletion.")
-
-    if child_module and not child_id:
-        module.fail_json(msg="child_id is required for deleting a child record.")
 
     client = SDPClient(module)
     endpoint = construct_endpoint(module)

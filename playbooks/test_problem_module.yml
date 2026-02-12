@@ -1,0 +1,110 @@
+- name: Test All Modules - Problem Lifecycle
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars_files:
+    - credentials.yml
+
+  tasks:
+    # Step 1: OAuth Token
+    - name: Fetch OAuth Token
+      manageengine.sdp_cloud.oauth_token:
+        client_id: "{{ client_id }}"
+        client_secret: "{{ client_secret }}"
+        refresh_token: "{{ refresh_token }}"
+        dc: "{{ dc }}"
+      register: token_output
+
+    # Step 2: Create a Problem
+    - name: Create a Problem
+      manageengine.sdp_cloud.write_record:
+        domain: "{{ domain }}"
+        parent_module_name: "problem"
+        auth_token: "{{ token_output.access_token }}"
+        dc: "{{ dc }}"
+        portal_name: "{{ portal_name }}"
+        payload:
+          title: "Test_all_module_script"
+          description: "Created via test_all_module_script"
+          priority: "High"
+      register: created_problem
+
+    - name: Display Created Problem
+      ansible.builtin.debug:
+        msg:
+          - "ID: {{ created_problem.response.problem.id }}"
+          - "Title: {{ created_problem.response.problem.title }}"
+
+    # Step 3: Update the same Problem
+    - name: Update the Problem
+      manageengine.sdp_cloud.write_record:
+        domain: "{{ domain }}"
+        parent_module_name: "problem"
+        parent_id: "{{ created_problem.response.problem.id }}"
+        auth_token: "{{ token_output.access_token }}"
+        dc: "{{ dc }}"
+        portal_name: "{{ portal_name }}"
+        payload:
+          title: "Test_all_module_script - Updated"
+          priority: "Low"
+      register: updated_problem
+
+    - name: Display Updated Problem
+      ansible.builtin.debug:
+        msg:
+          - "ID: {{ updated_problem.response.problem.id }}"
+          - "Title: {{ updated_problem.response.problem.title }}"
+
+    # Step 4: Get problems without ID (list)
+    - name: Get Problems (List)
+      manageengine.sdp_cloud.read_record:
+        domain: "{{ domain }}"
+        parent_module_name: "problem"
+        auth_token: "{{ token_output.access_token }}"
+        dc: "{{ dc }}"
+        portal_name: "{{ portal_name }}"
+        payload:
+          row_count: 1
+          sort_field: "created_time"
+          sort_order: "desc"
+      register: list_problems
+
+    - name: Display Problem List
+      ansible.builtin.debug:
+        msg: "ID: {{ item.id }} | Title: {{ item.title }}"
+      loop: "{{ list_problems.response.problems }}"
+      loop_control:
+        label: "Problem {{ item.id }}"
+
+    # Step 5: Get the same problem by ID
+    - name: Get Problem by ID
+      manageengine.sdp_cloud.read_record:
+        domain: "{{ domain }}"
+        parent_module_name: "problem"
+        parent_id: "{{ created_problem.response.problem.id }}"
+        auth_token: "{{ token_output.access_token }}"
+        dc: "{{ dc }}"
+        portal_name: "{{ portal_name }}"
+      register: get_problem
+
+    - name: Display Problem Details
+      ansible.builtin.debug:
+        msg:
+          - "ID: {{ get_problem.response.problem.id }}"
+          - "Title: {{ get_problem.response.problem.title }}"
+
+    # Step 6: Delete the problem we created
+    - name: Delete the Problem
+      manageengine.sdp_cloud.delete_record:
+        domain: "{{ domain }}"
+        parent_module_name: "problem"
+        parent_id: "{{ created_problem.response.problem.id }}"
+        auth_token: "{{ token_output.access_token }}"
+        dc: "{{ dc }}"
+        portal_name: "{{ portal_name }}"
+      register: delete_result
+
+    - name: Display Delete Result
+      ansible.builtin.debug:
+        msg: "Problem {{ created_problem.response.problem.id }} deleted successfully."

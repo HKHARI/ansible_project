@@ -21,7 +21,9 @@
           start_index: 1
       register: list_response
 
-    - name: Display List Response
+    - name: Display Problems (ID and Title)
       ansible.builtin.debug:
-        msg:
-          - "{{ list_response }}"
+        msg: "ID: {{ item.id }} | Title: {{ item.title }}"
+      loop: "{{ list_response.response.problems }}"
+      loop_control:
+        label: "{{ item.display_id.display_value }}"
