@@ -96,10 +96,11 @@
 
     # Step 6: Delete the request we created
     - name: Delete the Request
-      manageengine.sdp_cloud.delete_record:
+      manageengine.sdp_cloud.write_record:
         domain: "{{ domain }}"
         parent_module_name: "request"
         parent_id: "{{ created_request.response.request.id }}"
+        state: absent
         auth_token: "{{ token_output.access_token }}"
         dc: "{{ dc }}"
         portal_name: "{{ portal_name }}"

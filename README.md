@@ -73,8 +73,7 @@ Here are a few common automation scenarios enabled by this collection:
 | ---- | ----------- |
 | [oauth_token](https://github.com/HKHARI/AnsibleCollections/blob/main/manageengine/sdp_cloud/plugins/modules/oauth_token.py) | Generate ManageEngine SDP Cloud OAuth Access Token |
 | [read_record](https://github.com/HKHARI/AnsibleCollections/blob/main/manageengine/sdp_cloud/plugins/modules/read_record.py) | Read API module for ManageEngine ServiceDesk Plus Cloud |
-| [write_record](https://github.com/HKHARI/AnsibleCollections/blob/main/manageengine/sdp_cloud/plugins/modules/write_record.py) | Write API module for ManageEngine ServiceDesk Plus Cloud |
-| [delete_record](https://github.com/HKHARI/AnsibleCollections/blob/main/manageengine/sdp_cloud/plugins/modules/delete_record.py) | Delete API module for ManageEngine ServiceDesk Plus Cloud |
+| [write_record](https://github.com/HKHARI/AnsibleCollections/blob/main/manageengine/sdp_cloud/plugins/modules/write_record.py) | Manage records (create, update, delete) in ManageEngine ServiceDesk Plus Cloud |
 
 ## Example Usage
 
@@ -164,13 +163,14 @@ dc: "US" # Data Center (US, EU, IN, AU, CN, JP)
 **Delete a Problem:**
 ```yaml
 - name: Delete a Problem
-  manageengine.sdp_cloud.delete_record:
+  manageengine.sdp_cloud.write_record:
     auth_token: "{{ auth_token.access_token }}"
     dc: "{{ dc }}"
     domain: "sdpondemand.manageengine.com"
     portal_name: "ithelpdesk"
     parent_module_name: "problem"
     parent_id: "100"
+    state: absent
 ```
 
 ## Testing

@@ -14,43 +14,16 @@ short_description: Read API module for ManageEngine ServiceDesk Plus Cloud
 description:
   - Performs data retrieval API operations (GET) on ManageEngine ServiceDesk Plus Cloud entities.
   - Supports Requests, Problems, Changes, and Releases.
+  - If C(parent_id) is provided, retrieves a single record. Otherwise, retrieves a list of records.
 extends_documentation_fragment:
   - manageengine.sdp_cloud.sdp
 options:
-  domain:
-    description:
-      - The domain URL of your ServiceDesk Plus Cloud instance (e.g., sdpondemand.manageengine.com).
-    type: str
-    required: true
-  portal_name:
-    description:
-      - The portal name (e.g., ithelpdesk).
-    type: str
-    required: true
-  dc:
-    description:
-      - The Data Center location (e.g., US, EU).
-    type: str
-    required: true
-    choices: [US, EU, IN, AU, CN, JP, CA, SA]
-  auth_token:
-    description:
-      - The OAuth access token.
-      - Mutually exclusive with I(client_id), I(client_secret), I(refresh_token).
-    type: str
-  parent_module_name:
-    description:
-      - The parent module name (e.g., requests, problems, changes, releases).
-    type: str
-    required: true
-    choices: [request, problem, change, release]
-  parent_id:
-    description:
-      - The ID of the parent entity.
-    type: str
   payload:
     description:
-      - The input data for the API request (e.g., list_info parameters like row_count, start_index).
+      - The input data for the API request.
+      - Used for list operations to control pagination and sorting.
+      - Supported keys are C(row_count) (1-100, default 10), C(sort_field), C(sort_order) (asc/desc), C(get_total_count), and C(start_index).
+      - Ignored when C(parent_id) is provided.
     type: dict
 '''
 
@@ -172,7 +145,7 @@ def run_module():
 
     module = AnsibleModule(
         argument_spec=module_args,
-        supports_check_mode=False,
+        supports_check_mode=True,
         mutually_exclusive=AUTH_MUTUALLY_EXCLUSIVE,
         required_together=AUTH_REQUIRED_TOGETHER
     )

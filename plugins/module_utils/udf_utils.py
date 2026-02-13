@@ -28,18 +28,16 @@ def fetch_udf_metadata(module, client, module_name):
     Fetches the metadata for the given module to retrieve UDF definitions.
     Uses SDPClient for auth handling and caching to prevent redundant API calls.
     """
-    global UDF_METADATA_CACHE
-    
     if module_name in UDF_METADATA_CACHE:
         return UDF_METADATA_CACHE[module_name]
 
     # Use construct_endpoint with '_metainfo' operation
     from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.api_util import construct_endpoint
     endpoint = construct_endpoint(module, operation='_metainfo')
-    
+
     # SDPClient handles auth token generation/reuse and base URL
     response = client.request(endpoint, method='GET')
-    
+
     # Parse response to get UDF fields
     # Structure: response['metainfo']['fields']['udf_fields']['fields']
     try:
@@ -56,13 +54,13 @@ def resolve_udf_type(udf_definition):
     Resolves the field type from the SDP UDF definition.
     """
     api_type = udf_definition.get('type')
-    
+
     if api_type == 'lookup':
         # Check lookup_entity as per user requirement
         entity = udf_definition.get('lookup_entity')
         if entity in ['user', 'technician']:
             return 'user'
-        
+
         # It's a standard lookup
         return 'lookup'
 
@@ -72,7 +70,7 @@ def resolve_udf_type(udf_definition):
         return 'num'
     elif api_type == 'date' or api_type == 'datetime':
         return 'datetime'
-    
+
     return 'string'
 
 
@@ -83,11 +81,11 @@ def get_udf_field_type(module, client, module_name, field_name):
     """
     # 1. Fetch/Get Metadata
     udf_defs = fetch_udf_metadata(module, client, module_name)
-    
+
     # 2. Lookup Field
     field_key = field_name.lower()
     field_def = udf_defs.get(field_key)
-    
+
     if not field_def:
         # Strict validation: Fail if UDF matches prefix but is not in metadata
         module.fail_json(msg="Invalid UDF field '{0}'. Field not found in module metadata.".format(field_name))

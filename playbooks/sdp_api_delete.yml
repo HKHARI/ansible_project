@@ -8,10 +8,11 @@
 
   tasks:
     - name: Delete Problem
-      manageengine.sdp_cloud.delete_record:
+      manageengine.sdp_cloud.write_record:
         domain: "{{ domain }}"
         parent_module_name: "problem"
         parent_id: "100" # Replace with actual Problem ID
+        state: absent
         client_id: "{{ client_id }}"
         client_secret: "{{ client_secret }}"
         refresh_token: "{{ refresh_token }}"

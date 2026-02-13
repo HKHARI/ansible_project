@@ -96,10 +96,11 @@
 
     # Step 6: Delete the change we created
     - name: Delete the Change
-      manageengine.sdp_cloud.delete_record:
+      manageengine.sdp_cloud.write_record:
         domain: "{{ domain }}"
         parent_module_name: "change"
         parent_id: "{{ created_change.response.change.id }}"
+        state: absent
         auth_token: "{{ token_output.access_token }}"
         dc: "{{ dc }}"
         portal_name: "{{ portal_name }}"

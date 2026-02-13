@@ -18,3 +18,7 @@ homepage: https://github.com/ManageEngine/manageengine.sdpcloud
 issues: https://github.com/ManageEngine/manageengine.sdpcloud/issues
 build_ignore:
   - .gitignore
+  - .vscode
+  - .venv
+  - playbooks
+  - conftest.py

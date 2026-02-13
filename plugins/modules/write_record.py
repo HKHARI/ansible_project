@@ -10,49 +10,29 @@ DOCUMENTATION = r'''
 module: write_record
 author:
   - Harish Kumar (@HKHARI)
-short_description: Write API module for ManageEngine ServiceDesk Plus Cloud
+short_description: Manage records in ManageEngine ServiceDesk Plus Cloud
 description:
-  - Creates or updates entities in ManageEngine ServiceDesk Plus Cloud.
-  - Automatically infers the operation (Create vs Update) based on the presence of C(parent_id).
-  - Use C(delete_record) module for deletions.
+  - Creates, updates, or deletes entities in ManageEngine ServiceDesk Plus Cloud.
+  - When C(state=present) (default), automatically infers create vs update based on the presence of C(parent_id).
+  - When C(state=absent), deletes the record identified by C(parent_id).
+  - Supports idempotency, check mode, and diff mode.
 extends_documentation_fragment:
   - manageengine.sdp_cloud.sdp
 options:
-  domain:
+  state:
     description:
-      - The domain URL of your ServiceDesk Plus Cloud instance (e.g., sdpondemand.manageengine.com).
+      - The desired state of the record.
+      - C(present) ensures the record exists (create or update).
+      - C(absent) ensures the record is deleted.
     type: str
-    required: true
-  portal_name:
-    description:
-      - The portal name (e.g., ithelpdesk).
-    type: str
-    required: true
-  dc:
-    description:
-      - The Data Center location (e.g., US, EU).
-    type: str
-    required: true
-    choices: [US, EU, IN, AU, CN, JP, CA, SA]
-  auth_token:
-    description:
-      - The OAuth access token.
-      - Mutually exclusive with I(client_id), I(client_secret), I(refresh_token).
-    type: str
-  parent_module_name:
-    description:
-      - The parent module name (e.g., requests, problems, changes, releases).
-    type: str
-    required: true
-    choices: [request, problem, change, release]
-  parent_id:
-    description:
-      - The ID of the parent entity.
-      - Required for Update operations.
-    type: str
+    default: present
+    choices: [present, absent]
   payload:
     description:
       - The input data for the API request.
+      - For create operations, this should contain the fields for the new record.
+      - For update operations, this should contain only the fields to be modified.
+      - Not used when C(state=absent).
     type: dict
 '''
 
@@ -61,6 +41,7 @@ EXAMPLES = r'''
   manageengine.sdp_cloud.write_record:
     domain: "sdpondemand.manageengine.com"
     parent_module_name: "request"
+    state: present
     client_id: "your_client_id"
     client_secret: "your_client_secret"
     refresh_token: "your_refresh_token"
@@ -76,6 +57,7 @@ EXAMPLES = r'''
     domain: "sdpondemand.manageengine.com"
     parent_module_name: "problem"
     parent_id: "100"
+    state: present
     client_id: "your_client_id"
     client_secret: "your_client_secret"
     refresh_token: "your_refresh_token"
@@ -83,6 +65,18 @@ EXAMPLES = r'''
     portal_name: "ithelpdesk"
     payload:
       title: "Updated Title"
+
+- name: Delete a Request
+  manageengine.sdp_cloud.write_record:
+    domain: "sdpondemand.manageengine.com"
+    parent_module_name: "request"
+    parent_id: "100"
+    state: absent
+    client_id: "your_client_id"
+    client_secret: "your_client_secret"
+    refresh_token: "your_refresh_token"
+    dc: "US"
+    portal_name: "ithelpdesk"
 '''
 
 RETURN = r'''
@@ -95,6 +89,7 @@ response:
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.api_util import (
     SDPClient, common_argument_spec, validate_parameters, construct_endpoint,
+    get_current_record, has_differences,
     AUTH_MUTUALLY_EXCLUSIVE, AUTH_REQUIRED_TOGETHER
 )
 from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.sdp_config import MODULE_CONFIG
@@ -207,16 +202,89 @@ def construct_payload(module, client=None):
     return {root_key: constructed_data}
 
 
+def _handle_absent(module, client, endpoint, parent_module):
+    """Handle state=absent (delete) logic."""
+    parent_id = module.params.get('parent_id')
+
+    if not parent_id:
+        module.fail_json(msg="parent_id is required when state=absent.")
+
+    # Idempotency: Check if the record exists before attempting delete
+    current_record = get_current_record(client, module)
+
+    if not current_record:
+        module.exit_json(changed=False, msg="Record does not exist, nothing to delete.")
+
+    if module.check_mode:
+        result = dict(
+            changed=True,
+            msg="Would delete {0} record with id {1}.".format(parent_module, parent_id),
+        )
+        if module._diff:
+            result['diff'] = {'before': current_record, 'after': {}}
+        module.exit_json(**result)
+
+    response = client.request(endpoint=endpoint, method='DELETE')
+
+    result = dict(changed=True, response=response)
+    if module._diff:
+        result['diff'] = {'before': current_record, 'after': {}}
+    module.exit_json(**result)
+
+
+def _handle_present(module, client, endpoint, parent_module):
+    """Handle state=present (create/update) logic."""
+    parent_id = module.params.get('parent_id')
+
+    method = 'PUT' if parent_id else 'POST'
+
+    # Construct Payload
+    data = construct_payload(module, client)
+
+    # Idempotency: For updates, compare desired state with current state
+    current_record = None
+    if method == 'PUT' and data:
+        current_record = get_current_record(client, module)
+
+        if current_record and not has_differences(data, current_record, parent_module):
+            # No changes needed -- exit without making the API call
+            module.exit_json(changed=False, response={parent_module: current_record}, payload=data)
+
+    # Check mode: report what would change without making the API call
+    if module.check_mode:
+        result = dict(
+            changed=True,
+            msg="Would {0} a {1} record.".format('update' if method == 'PUT' else 'create', parent_module),
+            payload=data,
+        )
+        if module._diff and current_record:
+            result['diff'] = {'before': current_record, 'after': data.get(parent_module, {})}
+        module.exit_json(**result)
+
+    response = client.request(endpoint=endpoint, method=method, data=data)
+
+    result = dict(changed=True, response=response, payload=data)
+
+    if module._diff:
+        result['diff'] = {
+            'before': current_record or {},
+            'after': response.get(parent_module, {})
+        }
+
+    module.exit_json(**result)
+
+
 def run_module():
     """Main execution entry point for write module."""
     module_args = common_argument_spec()
     module_args.update(dict(
-        payload=dict(type='dict')
+        state=dict(type='str', default='present', choices=['present', 'absent']),
+        payload=dict(type='dict'),
     ))
 
     module = AnsibleModule(
         argument_spec=module_args,
-        supports_check_mode=False,
+        supports_check_mode=True,
         mutually_exclusive=AUTH_MUTUALLY_EXCLUSIVE,
         required_together=AUTH_REQUIRED_TOGETHER
     )
@@ -226,26 +294,13 @@ def run_module():
 
     client = SDPClient(module)
     endpoint = construct_endpoint(module)
+    parent_module = module.params['parent_module_name']
+    state = module.params['state']
 
-    # Automatic Operation Inference
-    parent_id = module.params.get('parent_id')
-
-    method = 'POST'  # Default to Create
-
-    # If parent_id is present, it's an Update
-    if parent_id:
-        method = 'PUT'
-
-    # Construct Payload
-    data = construct_payload(module, client)
-
-    response = client.request(
-        endpoint=endpoint,
-        method=method,
-        data=data
-    )
-
-    module.exit_json(changed=True, response=response, payload=data)
+    if state == 'absent':
+        _handle_absent(module, client, endpoint, parent_module)
+    else:
+        _handle_present(module, client, endpoint, parent_module)
 
 
 def main():
