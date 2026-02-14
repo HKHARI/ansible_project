@@ -1,6 +1,7 @@
 /tests/output/
 /changelogs/.plugin-cache.yaml
-
+/agent_doc/
+/local_collections/
 
 # Credentials
 credentials.yml

@@ -52,11 +52,13 @@ EXAMPLES = r'''
   no_log: true
 
 - name: Use the token in subsequent tasks
-  manageengine.sdp_cloud.request_info:
+  manageengine.sdp_cloud.read_record:
     domain: "sdpondemand.manageengine.com"
     portal_name: "ithelpdesk"
+    parent_module_name: "request"
+    parent_id: "100"
     auth_token: "{{ auth_response.access_token }}"
-    request_id: "100"
+    dc: "US"
 '''
 
 RETURN = r'''

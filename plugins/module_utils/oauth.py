@@ -57,4 +57,4 @@ def get_access_token(module, client_id, client_secret, refresh_token, dc):
     except ValueError:
         module.fail_json(msg="Invalid JSON response from Auth Server")
 
-    module.fail_json(msg="Unknown error during token generation", response=data)
+    module.fail_json(msg="Token response missing access_token and error", response=data)
