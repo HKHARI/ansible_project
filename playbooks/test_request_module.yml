@@ -1,3 +1,4 @@
+---
 - name: Test All Modules - Request Lifecycle
   hosts: localhost
   connection: local
@@ -73,7 +74,7 @@
     - name: Display Request List
       ansible.builtin.debug:
         msg: "ID: {{ item.id }} | Subject: {{ item.subject }}"
-      loop: "{{ list_requests.response.requests }}"
+      loop: "{{ list_requests.response.requests | default([]) }}"
       loop_control:
         label: "Request {{ item.id }}"
 

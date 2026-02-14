@@ -117,15 +117,35 @@ class TestTransformFieldValue:
         result = transform_field_value(module, 'priority', 'High', 'lookup')
         assert result == {'name': 'High'}
 
-    def test_user_by_name(self):
-        module = create_mock_module({})
-        result = transform_field_value(module, 'requester', 'Administrator', 'user')
-        assert result == {'name': 'Administrator'}
-
     def test_user_by_email(self):
         module = create_mock_module({})
         result = transform_field_value(module, 'requester', 'admin@example.com', 'user')
         assert result == {'email_id': 'admin@example.com'}
+
+    def test_user_rejects_name(self):
+        """User fields accept only email_id; name (no @) should fail."""
+        module = create_mock_module({})
+        with pytest.raises(SystemExit):
+            transform_field_value(module, 'requester', 'Administrator', 'user')
+        module.fail_json.assert_called_once()
+        call_msg = module.fail_json.call_args[1]['msg']
+        assert 'email' in call_msg.lower()
+        assert 'Administrator' in call_msg
+
+    def test_user_rejects_invalid_email_like(self):
+        """User fields reject values that have @ but no domain.tld (e.g. hell@hi)."""
+        module = create_mock_module({})
+        with pytest.raises(SystemExit):
+            transform_field_value(module, 'requester', 'hell@hi', 'user')
+        module.fail_json.assert_called_once()
+
+    def test_user_accepts_valid_email(self):
+        """User fields accept valid email (local@domain.tld)."""
+        module = create_mock_module({})
+        result = transform_field_value(module, 'requester', 'user@example.com', 'user')
+        assert result == {'email_id': 'user@example.com'}
+        result = transform_field_value(module, 'requester', 'a@b.co', 'user')
+        assert result == {'email_id': 'a@b.co'}
 
 
 # ---------------------------------------------------------------------------
@@ -201,11 +221,11 @@ class TestConstructPayload:
             'payload': {
                 'subject': 'Test',
                 'priority': 'High',
-                'requester': 'Admin',
+                'requester': 'admin@example.com',
             },
             'parent_module_name': 'request',
         })
         result = construct_payload(module)
         assert result['request']['subject'] == 'Test'
         assert result['request']['priority'] == {'name': 'High'}
-        assert result['request']['requester'] == {'name': 'Admin'}
+        assert result['request']['requester'] == {'email_id': 'admin@example.com'}

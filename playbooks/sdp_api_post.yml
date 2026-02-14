@@ -1,4 +1,5 @@
-- name: Generate SDP Cloud Access Token
+---
+- name: Create a Request (POST)
   hosts: localhost
   connection: local
   gather_facts: false
@@ -7,7 +8,7 @@
     - credentials.yml
 
   tasks:
-    - name: Create a Problem
+    - name: Create a Request
       manageengine.sdp_cloud.write_record:
         domain: "{{ domain }}"
         parent_module_name: "request"
@@ -17,14 +18,13 @@
         dc: "{{ dc }}"
         portal_name: "{{ portal_name }}"
         payload:
-          subject: "New problem from Ansible New modulare version"
-          description: "Created via sdp_api module"
+          subject: "New request from Ansible"
+          description: "Created via sdp_api_post playbook"
           priority: "High"
-          
-      register: new_problem
+      register: new_request
 
-    - name: Display Problem Data
+    - name: Display Request Data
       ansible.builtin.debug:
         msg:
-          - "ID: {{ new_problem}}"
-          
+          - "ID: {{ new_request.response.request.id | default('N/A') }}"
+          - "Subject: {{ new_request.response.request.subject | default('N/A') }}"

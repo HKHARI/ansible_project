@@ -1,3 +1,4 @@
+---
 - name: Test All Modules - Change Lifecycle
   hosts: localhost
   connection: local
@@ -73,7 +74,7 @@
     - name: Display Change List
       ansible.builtin.debug:
         msg: "ID: {{ item.id }} | Title: {{ item.title }}"
-      loop: "{{ list_changes.response.changes }}"
+      loop: "{{ list_changes.response.changes | default([]) }}"
       loop_control:
         label: "Change {{ item.id }}"
 

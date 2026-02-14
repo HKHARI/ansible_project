@@ -189,6 +189,28 @@ class TestSDPClient:
         module.fail_json.assert_called_once()
 
     @patch(FETCH_URL_PATH)
+    def test_request_404_with_body_fails_not_changed(self, mock_fetch):
+        """When server returns 404 with a body (e.g. wrong endpoint), task must fail, not return changed=True."""
+        mock_fetch.return_value = build_fetch_url_response({'error': 'Not Found'}, status=404)
+
+        client, module = self._make_client({
+            'domain': 'test.example.com',
+            'portal_name': 'portal',
+            'auth_token': 'tok',
+            'client_id': None, 'client_secret': None,
+            'refresh_token': None, 'dc': 'US',
+        })
+
+        with pytest.raises(SystemExit):
+            client.request('wrong_endpoint', method='POST', data={'request': {'subject': 'Test'}})
+        module.fail_json.assert_called_once()
+        call_kwargs = module.fail_json.call_args[1]
+        assert call_kwargs.get('status') == 404
+        # error_details is parsed JSON (dict), not a string
+        assert isinstance(call_kwargs.get('error_details'), dict)
+        assert call_kwargs['error_details'] == {'error': 'Not Found'}
+
+    @patch(FETCH_URL_PATH)
     @patch('plugins.module_utils.api_util.time.sleep')
     def test_request_retries_on_transient_errors(self, mock_sleep, mock_fetch):
         """Retry on 503 then succeed on second attempt."""

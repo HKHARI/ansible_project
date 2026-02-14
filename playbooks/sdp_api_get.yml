@@ -1,3 +1,4 @@
+---
 - name: Get List of Problems (GET)
   hosts: localhost
   connection: local
@@ -24,6 +25,6 @@
     - name: Display Problems (ID and Title)
       ansible.builtin.debug:
         msg: "ID: {{ item.id }} | Title: {{ item.title }}"
-      loop: "{{ list_response.response.problems }}"
+      loop: "{{ list_response.response.problems | default([]) }}"
       loop_control:
-        label: "{{ item.display_id.display_value }}"
+        label: "{{ item.display_id.display_value | default(item.id) }}"

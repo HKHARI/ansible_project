@@ -46,6 +46,9 @@ class TestHandleError:
         call_kwargs = module.fail_json.call_args[1]
         assert '4001' in call_kwargs['msg']
         assert 'Field validation failed' in call_kwargs['msg']
+        # Valid JSON body is passed as parsed dict, not string
+        assert isinstance(call_kwargs['error_details'], dict)
+        assert call_kwargs['error_details'] == error_body
 
     def test_generic_error_key(self):
         module = create_mock_module({})
@@ -61,6 +64,8 @@ class TestHandleError:
 
         call_kwargs = module.fail_json.call_args[1]
         assert call_kwargs['msg'] == 'Something went wrong'
+        assert isinstance(call_kwargs['error_details'], dict)
+        assert call_kwargs['error_details'] == error_body
 
     def test_invalid_json_body(self):
         module = create_mock_module({})
@@ -76,6 +81,8 @@ class TestHandleError:
         call_kwargs = module.fail_json.call_args[1]
         # Falls back to info['msg'] when JSON parsing fails
         assert call_kwargs['msg'] == 'Server Error'
+        # Invalid JSON body is left as string
+        assert call_kwargs['error_details'] == 'not json at all'
 
     def test_no_body(self):
         module = create_mock_module({})
@@ -86,3 +93,4 @@ class TestHandleError:
 
         call_kwargs = module.fail_json.call_args[1]
         assert call_kwargs['msg'] == 'Not Found'
+        assert call_kwargs.get('error_details') is None

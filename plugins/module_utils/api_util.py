@@ -130,9 +130,8 @@ class SDPClient:
 
         headers = {
             'Authorization': 'Zoho-oauthtoken {0}'.format(self.auth_token),
-            'Accept': 'application/v3+json'
+            'Accept': 'application/vnd.manageengine.sdp.v3+json'
         }
-
         payload = None
         if data:
             payload = urllib_parse.urlencode({'input_data': json.dumps(data)})
@@ -174,8 +173,15 @@ class SDPClient:
     def _parse_response(self, response, info):
         """Parse and validate the API response."""
         status_code = info.get('status', -1)
-
         body = response.read()
+
+        # Treat HTTP 4xx/5xx as failure (e.g. 404 wrong endpoint) so we don't return changed=True
+        if status_code >= 400:
+            error_info = dict(info)
+            if body:
+                error_info['body'] = body.decode('utf-8', errors='replace') if isinstance(body, bytes) else body
+            handle_error(self.module, error_info, "API Request Failed")
+
         if not body:
             return {"status": status_code, "msg": "Empty response body"}
 
@@ -293,7 +299,7 @@ def _values_match(desired, current):
 
     Handles the various SDP API value formats:
     - lookup fields: {'name': 'value'} compared to {'name': 'value', 'id': '123', ...}
-    - user fields: {'name': 'value'} or {'email_id': 'value'}
+    - user fields: {'email_id': 'value'} (only email_id is accepted as input)
     - datetime fields: {'value': timestamp}
     - scalar fields: direct comparison
 

@@ -5,6 +5,23 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+
+def _is_valid_email(value):
+    """Return True if value looks like an email (local@domain.tld). Rejects e.g. 'hell@hi'."""
+    if not isinstance(value, str) or not value:
+        return False
+    parts = value.split('@')
+    if len(parts) != 2:
+        return False
+    local, domain = parts
+    if not local or not domain:
+        return False
+    # Domain must contain at least one dot (e.g. example.com)
+    if '.' not in domain:
+        return False
+    return True
+
+
 DOCUMENTATION = r'''
 ---
 module: write_record
@@ -50,7 +67,7 @@ EXAMPLES = r'''
     payload:
       subject: "New Request from Ansible"
       description: "Created via sdp_api_write module"
-      requester: "Administrator"
+      requester: "requester@example.com"
 
 - name: Update a Problem
   manageengine.sdp_cloud.write_record:
@@ -145,9 +162,12 @@ def transform_field_value(module, field_name, value, ftype):
         return {'name': value}
 
     elif ftype == 'user':
-        if isinstance(value, str) and '@' in value:
-            return {'email_id': value}
-        return {'name': value}
+        # User fields accept only a valid email_id (local@domain.tld), not e.g. 'hell@hi' or a name.
+        if not _is_valid_email(value):
+            module.fail_json(
+                msg="User field '{0}' accepts only a valid email address (e.g. user@example.com). Got: {1}".format(field_name, value)
+            )
+        return {'email_id': value}
 
     return value
 
@@ -263,7 +283,7 @@ def _handle_present(module, client, endpoint, parent_module):
 
     response = client.request(endpoint=endpoint, method=method, data=data)
 
-    result = dict(changed=True, response=response, payload=data)
+    result = dict(changed=True, response=response, payload=data, endpoint=endpoint, method=method)
 
     if module._diff:
         result['diff'] = {

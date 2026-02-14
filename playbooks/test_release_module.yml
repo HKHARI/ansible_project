@@ -1,3 +1,4 @@
+---
 - name: Test All Modules - Release Lifecycle
   hosts: localhost
   connection: local
@@ -73,7 +74,7 @@
     - name: Display Release List
       ansible.builtin.debug:
         msg: "ID: {{ item.id }} | Title: {{ item.title }}"
-      loop: "{{ list_releases.response.releases }}"
+      loop: "{{ list_releases.response.releases | default([]) }}"
       loop_control:
         label: "Release {{ item.id }}"
 

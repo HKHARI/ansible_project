@@ -1,3 +1,4 @@
+---
 - name: Update a Problem (PUT)
   hosts: localhost
   connection: local
@@ -11,7 +12,7 @@
       manageengine.sdp_cloud.write_record:
         domain: "{{ domain }}"
         parent_module_name: "problem"
-        parent_id: "100" # Replace with actual Problem ID
+        parent_id: "191203000004654551" # Replace with actual Problem ID
         client_id: "{{ client_id }}"
         client_secret: "{{ client_secret }}"
         refresh_token: "{{ refresh_token }}"
