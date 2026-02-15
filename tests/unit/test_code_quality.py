@@ -51,7 +51,7 @@ def test_pep8_compliance():
     """Run pycodestyle (pep8) to catch style issues before ansible-sanity does.
 
     E402 is excluded because Ansible modules require DOCUMENTATION/EXAMPLES/RETURN
-    strings before imports, which is standard practice.
+    strings before imports -- this is standard practice and ansible-sanity allows it.
     """
     cmd = [
         'pycodestyle',
