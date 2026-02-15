@@ -89,6 +89,34 @@ refresh_token: "YOUR_REFRESH_TOKEN"
 dc: "US" # Data Center (US, EU, IN, AU, CN, JP)
 ```
 
+**Environment Variables (alternative):**
+
+You can also set credentials as environment variables. These are used as fallbacks when module parameters are not provided:
+
+- `SDP_CLOUD_AUTH_TOKEN` - Pre-generated OAuth access token
+- `SDP_CLOUD_CLIENT_ID` - Zoho API Console Client ID
+- `SDP_CLOUD_CLIENT_SECRET` - Zoho API Console Client Secret
+- `SDP_CLOUD_REFRESH_TOKEN` - Long-lived refresh token
+
+```bash
+export SDP_CLOUD_CLIENT_ID="YOUR_CLIENT_ID"
+export SDP_CLOUD_CLIENT_SECRET="YOUR_CLIENT_SECRET"
+export SDP_CLOUD_REFRESH_TOKEN="YOUR_REFRESH_TOKEN"
+```
+
+When environment variables are set, you can omit the credential parameters from your playbooks:
+
+```yaml
+- name: Create a Request (credentials from env vars)
+  manageengine.sdp_cloud.write_record:
+    domain: "sdpondemand.manageengine.com"
+    parent_module_name: "request"
+    dc: "US"
+    portal_name: "ithelpdesk"
+    payload:
+      subject: "Request created using env var auth"
+```
+
 ### Playbook Examples
 
 **Generate Token:**

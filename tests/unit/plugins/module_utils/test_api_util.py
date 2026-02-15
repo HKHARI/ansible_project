@@ -5,6 +5,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import pytest
 from unittest.mock import patch
 
 from tests.unit.conftest import (
@@ -13,7 +14,7 @@ from tests.unit.conftest import (
 )
 
 from plugins.module_utils.api_util import (
-    SDPClient, common_argument_spec, check_module_config,
+    SDPClient, common_argument_spec, check_module_config, get_auth_params,
     construct_endpoint, get_current_record, has_differences, _values_match,
 )
 
@@ -57,6 +58,95 @@ class TestCheckModuleConfig:
         module = create_mock_module({'parent_module_name': 'invalid_module'})
         with pytest.raises(SystemExit):
             check_module_config(module)
+        module.fail_json.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# get_auth_params
+# ---------------------------------------------------------------------------
+class TestGetAuthParams:
+    def test_get_auth_params_from_args(self):
+        """Explicit module params are returned directly."""
+        module = create_mock_module({
+            'auth_token': 'tok_from_args',
+            'client_id': 'id_from_args',
+            'client_secret': 'secret_from_args',
+            'refresh_token': 'refresh_from_args',
+        })
+        result = get_auth_params(module)
+        assert result['auth_token'] == 'tok_from_args'
+        assert result['client_id'] == 'id_from_args'
+        assert result['client_secret'] == 'secret_from_args'
+        assert result['refresh_token'] == 'refresh_from_args'
+
+    def test_get_auth_params_from_env(self, monkeypatch):
+        """Environment variables work as fallback when params are empty."""
+        module = create_mock_module({
+            'auth_token': None,
+            'client_id': None,
+            'client_secret': None,
+            'refresh_token': None,
+        })
+        monkeypatch.setenv('SDP_CLOUD_AUTH_TOKEN', 'tok_from_env')
+        monkeypatch.setenv('SDP_CLOUD_CLIENT_ID', 'id_from_env')
+        monkeypatch.setenv('SDP_CLOUD_CLIENT_SECRET', 'secret_from_env')
+        monkeypatch.setenv('SDP_CLOUD_REFRESH_TOKEN', 'refresh_from_env')
+
+        result = get_auth_params(module)
+        assert result['auth_token'] == 'tok_from_env'
+        assert result['client_id'] == 'id_from_env'
+        assert result['client_secret'] == 'secret_from_env'
+        assert result['refresh_token'] == 'refresh_from_env'
+
+    def test_get_auth_params_fails_when_missing(self, monkeypatch):
+        """Fails with clear message when no credentials are available."""
+        module = create_mock_module({
+            'auth_token': None,
+            'client_id': None,
+            'client_secret': None,
+            'refresh_token': None,
+        })
+        # Ensure env vars are not set
+        monkeypatch.delenv('SDP_CLOUD_AUTH_TOKEN', raising=False)
+        monkeypatch.delenv('SDP_CLOUD_CLIENT_ID', raising=False)
+        monkeypatch.delenv('SDP_CLOUD_CLIENT_SECRET', raising=False)
+        monkeypatch.delenv('SDP_CLOUD_REFRESH_TOKEN', raising=False)
+
+        with pytest.raises(SystemExit):
+            get_auth_params(module)
+        module.fail_json.assert_called_once()
+        call_kwargs = module.fail_json.call_args[1]
+        assert 'Missing required credentials' in call_kwargs['msg']
+
+    def test_args_override_env(self, monkeypatch):
+        """Module params take precedence over environment variables."""
+        module = create_mock_module({
+            'auth_token': 'tok_from_args',
+            'client_id': None,
+            'client_secret': None,
+            'refresh_token': None,
+        })
+        monkeypatch.setenv('SDP_CLOUD_AUTH_TOKEN', 'tok_from_env')
+
+        result = get_auth_params(module)
+        assert result['auth_token'] == 'tok_from_args'
+
+    def test_partial_env_oauth_set(self, monkeypatch):
+        """Fails when only some OAuth env vars are set (no auth_token either)."""
+        module = create_mock_module({
+            'auth_token': None,
+            'client_id': None,
+            'client_secret': None,
+            'refresh_token': None,
+        })
+        monkeypatch.delenv('SDP_CLOUD_AUTH_TOKEN', raising=False)
+        monkeypatch.setenv('SDP_CLOUD_CLIENT_ID', 'id_from_env')
+        # client_secret and refresh_token not set
+        monkeypatch.delenv('SDP_CLOUD_CLIENT_SECRET', raising=False)
+        monkeypatch.delenv('SDP_CLOUD_REFRESH_TOKEN', raising=False)
+
+        with pytest.raises(SystemExit):
+            get_auth_params(module)
         module.fail_json.assert_called_once()
 
 

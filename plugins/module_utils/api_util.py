@@ -6,7 +6,9 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import json
+import os
 import time
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.oauth import get_access_token
 from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.sdp_config import DC_CHOICES, MODULE_CONFIG
@@ -31,19 +33,54 @@ AUTH_REQUIRED_TOGETHER = [
 ]
 
 
+# Environment variable names for credential fallback
+ENV_AUTH_TOKEN = 'SDP_CLOUD_AUTH_TOKEN'
+ENV_CLIENT_ID = 'SDP_CLOUD_CLIENT_ID'
+ENV_CLIENT_SECRET = 'SDP_CLOUD_CLIENT_SECRET'
+ENV_REFRESH_TOKEN = 'SDP_CLOUD_REFRESH_TOKEN'
+
+
 def common_argument_spec():
     """Return common argument specification for SDP modules."""
     return dict(
         domain=dict(type='str', required=True),
         portal_name=dict(type='str', required=True),
-        auth_token=dict(type='str', no_log=True),
-        client_id=dict(type='str'),
-        client_secret=dict(type='str', no_log=True),
-        refresh_token=dict(type='str', no_log=True),
+        auth_token=dict(type='str', no_log=True, fallback=(env_fallback, [ENV_AUTH_TOKEN])),
+        client_id=dict(type='str', fallback=(env_fallback, [ENV_CLIENT_ID])),
+        client_secret=dict(type='str', no_log=True, fallback=(env_fallback, [ENV_CLIENT_SECRET])),
+        refresh_token=dict(type='str', no_log=True, fallback=(env_fallback, [ENV_REFRESH_TOKEN])),
         dc=dict(type='str', required=True, choices=DC_CHOICES),
         parent_module_name=dict(type='str', required=True, choices=list(MODULE_CONFIG.keys())),
         parent_id=dict(type='str'),
     )
+
+
+def get_auth_params(module):
+    """Resolve auth credentials from module params, falling back to env vars.
+
+    Returns:
+        A dict with keys: auth_token, client_id, client_secret, refresh_token.
+        Fails the module if no valid credential set is found.
+    """
+    auth_token = module.params.get('auth_token') or os.environ.get(ENV_AUTH_TOKEN)
+    client_id = module.params.get('client_id') or os.environ.get(ENV_CLIENT_ID)
+    client_secret = module.params.get('client_secret') or os.environ.get(ENV_CLIENT_SECRET)
+    refresh_token = module.params.get('refresh_token') or os.environ.get(ENV_REFRESH_TOKEN)
+
+    if not auth_token and not (client_id and client_secret and refresh_token):
+        module.fail_json(
+            msg="Missing required credentials. Provide 'auth_token' or "
+                "('client_id', 'client_secret', 'refresh_token') via module params "
+                "or environment variables (SDP_CLOUD_AUTH_TOKEN, SDP_CLOUD_CLIENT_ID, "
+                "SDP_CLOUD_CLIENT_SECRET, SDP_CLOUD_REFRESH_TOKEN)."
+        )
+
+    return {
+        'auth_token': auth_token,
+        'client_id': client_id,
+        'client_secret': client_secret,
+        'refresh_token': refresh_token,
+    }
 
 
 def check_module_config(module):
@@ -97,7 +134,18 @@ class SDPClient:
     RETRYABLE_STATUS_CODES = (429, 500, 502, 503, 504)
 
     def _ensure_auth(self):
-        """Ensure we have a valid auth token, generating one if needed."""
+        """Ensure we have a valid auth token, generating one if needed.
+
+        Resolves credentials from module params first, then falls back to
+        environment variables via get_auth_params().
+        """
+        if not self.auth_token:
+            auth = get_auth_params(self.module)
+            self.auth_token = auth['auth_token']
+            self.client_id = auth['client_id']
+            self.client_secret = auth['client_secret']
+            self.refresh_token = auth['refresh_token']
+
         if not self.auth_token:
             if self.client_id and self.client_secret and self.refresh_token:
                 token_data = get_access_token(
@@ -107,8 +155,7 @@ class SDPClient:
                 self.auth_token = token_data['access_token']
             else:
                 self.module.fail_json(
-                    msg="Missing authentication credentials. Provide either 'auth_token' or "
-                        "('client_id', 'client_secret', 'refresh_token')."
+                    msg="Missing authentication credentials."
                 )
 
     def request(self, endpoint, method='GET', data=None, max_retries=3, retry_delay=2):
