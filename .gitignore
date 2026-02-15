@@ -3,6 +3,7 @@
 /agent_doc/
 /local_collections/
 /ansible.cfg
+.agent/
 
 # Credentials
 credentials.yml
