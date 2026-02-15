@@ -9,58 +9,68 @@ import os
 import subprocess
 import pytest
 
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+
+PATHS_TO_CHECK = [
+    os.path.join(REPO_ROOT, 'plugins'),
+    os.path.join(REPO_ROOT, 'tests'),
+]
 
 
 def test_no_unused_imports():
-    """
-    Run pylint to check for unused imports in the codebase.
-    This test fails if any unused imports are found.
-    """
-    # Paths to check
-    paths_to_check = [
-        os.path.join(REPO_ROOT, 'plugins'),
-        os.path.join(REPO_ROOT, 'tests'),
-    ]
-
-    # Command to run pylint
-    # --disable=all: Disable all checks
-    # --enable=unused-import: Enable only unused-import check
-    # --persistent=n: Don't save stats (avoid permission issues in sandbox)
+    """Run pylint to check for unused imports in the codebase."""
     cmd = [
         'pylint',
         '--disable=all',
         '--enable=unused-import',
         '--persistent=n',
-    ] + paths_to_check
+    ] + PATHS_TO_CHECK
 
     try:
-        # Run pylint
         result = subprocess.run(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             universal_newlines=True,
-            check=False
+            check=False,
         )
 
-        # Check output
         if result.returncode != 0:
-            # Pylint returns non-zero if issues are found or if there's a fatal error
-            # If output contains "unused-import", fail the test with the output
             if "unused-import" in result.stdout:
-                pytest.fail(f"Unused imports found:\n{result.stdout}")
-            elif result.returncode >= 32:
-                 # Usage error or internal error
-                 pytest.fail(f"Pylint failed to run:\n{result.stderr}\n{result.stdout}")
-            # If returncode is non-zero but no unused-import in stdout, it might be other issues if enabled,
-            # but here we only enabled unused-import.
-            # Pylint exit codes: 1=fatal, 2=error, 4=warning, 8=refactor, 16=convention, 32=usage_error
-            # unused-import is a warning (4) or convention/refactor depending on config, usually warning.
-
-            # Double check if we actually have unused imports reported
+                pytest.fail("Unused imports found:\n{0}".format(result.stdout))
+            if result.returncode >= 32:
+                pytest.fail("Pylint failed to run:\n{0}\n{1}".format(result.stderr, result.stdout))
             if "Unused import" in result.stdout or ": W0611:" in result.stdout:
-                 pytest.fail(f"Unused imports found:\n{result.stdout}")
+                pytest.fail("Unused imports found:\n{0}".format(result.stdout))
 
     except FileNotFoundError:
         pytest.skip("pylint not installed, skipping unused import test")
+
+
+def test_pep8_compliance():
+    """Run pycodestyle (pep8) to catch style issues before ansible-sanity does.
+
+    E402 is excluded because Ansible modules require DOCUMENTATION/EXAMPLES/RETURN
+    strings before imports, which is standard practice.
+    """
+    cmd = [
+        'pycodestyle',
+        '--max-line-length=160',
+        '--ignore=E402',
+        '--statistics',
+    ] + PATHS_TO_CHECK
+
+    try:
+        result = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+            check=False,
+        )
+
+        if result.returncode != 0:
+            pytest.fail("PEP8 violations found:\n{0}".format(result.stdout))
+
+    except FileNotFoundError:
+        pytest.skip("pycodestyle not installed, skipping pep8 test")
