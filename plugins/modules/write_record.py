@@ -26,7 +26,7 @@ DOCUMENTATION = r'''
 ---
 module: write_record
 author:
-  - Harish Kumar (@HKHARI)
+  - Harish Kumar (@harishkumar-k-7052)
 short_description: Manage records in ManageEngine ServiceDesk Plus Cloud
 description:
   - Creates, updates, or deletes entities in ManageEngine ServiceDesk Plus Cloud.
@@ -105,7 +105,7 @@ response:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.api_util import (
-    SDPClient, common_argument_spec, validate_parameters, construct_endpoint,
+    SDPClient, common_argument_spec, check_module_config, construct_endpoint,
     get_current_record, has_differences,
     AUTH_MUTUALLY_EXCLUSIVE, AUTH_REQUIRED_TOGETHER
 )
@@ -310,7 +310,7 @@ def run_module():
     )
 
     # Validation
-    validate_parameters(module)
+    check_module_config(module)
 
     client = SDPClient(module)
     endpoint = construct_endpoint(module)

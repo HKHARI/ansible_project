@@ -9,7 +9,7 @@ DOCUMENTATION = r'''
 ---
 module: read_record
 author:
-  - Harish Kumar (@HKHARI)
+  - Harish Kumar (@harishkumar-k-7052)
 short_description: Read API module for ManageEngine ServiceDesk Plus Cloud
 description:
   - Performs data retrieval API operations (GET) on ManageEngine ServiceDesk Plus Cloud entities.
@@ -62,7 +62,7 @@ response:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.api_util import (
-    SDPClient, common_argument_spec, validate_parameters, construct_endpoint,
+    SDPClient, common_argument_spec, check_module_config, construct_endpoint,
     AUTH_MUTUALLY_EXCLUSIVE, AUTH_REQUIRED_TOGETHER
 )
 from ansible_collections.manageengine.sdp_cloud.plugins.module_utils.sdp_config import MODULE_CONFIG
@@ -150,7 +150,7 @@ def run_module():
         required_together=AUTH_REQUIRED_TOGETHER
     )
 
-    validate_parameters(module)
+    check_module_config(module)
 
     client = SDPClient(module)
     endpoint = construct_endpoint(module)

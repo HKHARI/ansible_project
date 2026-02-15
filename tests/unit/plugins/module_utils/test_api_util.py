@@ -15,7 +15,7 @@ from tests.unit.conftest import (
 )
 
 from plugins.module_utils.api_util import (
-    SDPClient, common_argument_spec, validate_parameters,
+    SDPClient, common_argument_spec, check_module_config,
     construct_endpoint, get_current_record, has_differences, _values_match,
 )
 
@@ -48,17 +48,17 @@ class TestCommonArgumentSpec:
 
 
 # ---------------------------------------------------------------------------
-# validate_parameters
+# check_module_config
 # ---------------------------------------------------------------------------
-class TestValidateParameters:
+class TestCheckModuleConfig:
     def test_valid_module(self):
         module = create_mock_module({'parent_module_name': 'request'})
-        assert validate_parameters(module) is True
+        assert check_module_config(module) is True
 
     def test_invalid_module_name(self):
         module = create_mock_module({'parent_module_name': 'invalid_module'})
         with pytest.raises(SystemExit):
-            validate_parameters(module)
+            check_module_config(module)
         module.fail_json.assert_called_once()
 
 

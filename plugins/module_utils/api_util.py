@@ -46,8 +46,8 @@ def common_argument_spec():
     )
 
 
-def validate_parameters(module):
-    """Validate parameter dependencies and hierarchy."""
+def check_module_config(module):
+    """Validate that the parent module is configured in MODULE_CONFIG."""
     parent_module = module.params['parent_module_name']
 
     # Hierarchy Validation

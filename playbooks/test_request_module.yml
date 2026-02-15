@@ -23,6 +23,7 @@
         domain: "{{ domain }}"
         parent_module_name: "request"
         auth_token: "{{ token_output.access_token }}"
+        requester: "{{ requester }}"
         dc: "{{ dc }}"
         portal_name: "{{ portal_name }}"
         payload:
