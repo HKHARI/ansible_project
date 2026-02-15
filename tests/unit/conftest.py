@@ -8,7 +8,7 @@ __metaclass__ = type
 import json
 import pytest
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 # Paths to fetch_url -- patch both import aliases since Python may resolve to either one
 # depending on import order (direct vs symlinked ansible_collections path).

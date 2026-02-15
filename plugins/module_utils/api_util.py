@@ -320,4 +320,3 @@ def _values_match(desired, current):
 
     # Direct scalar comparison
     return desired == current
-

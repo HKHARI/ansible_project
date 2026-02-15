@@ -5,9 +5,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from tests.unit.conftest import (
     FETCH_URL_PATH, build_fetch_url_response, build_fetch_url_error,
@@ -103,7 +101,7 @@ class TestSDPClient:
         return SDPClient(module), module
 
     def test_base_url_construction(self):
-        client, _ = self._make_client({
+        client, _unused = self._make_client({
             'domain': 'test.example.com',
             'portal_name': 'myportal',
             'auth_token': 'tok',

@@ -17,6 +17,7 @@ description:
   - If C(parent_id) is provided, retrieves a single record. Otherwise, retrieves a list of records.
 extends_documentation_fragment:
   - manageengine.sdp_cloud.sdp
+  - manageengine.sdp_cloud.auth
 options:
   payload:
     description:

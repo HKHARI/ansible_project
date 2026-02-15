@@ -35,6 +35,7 @@ description:
   - Supports idempotency, check mode, and diff mode.
 extends_documentation_fragment:
   - manageengine.sdp_cloud.sdp
+  - manageengine.sdp_cloud.auth
 options:
   state:
     description:

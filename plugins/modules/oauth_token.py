@@ -16,29 +16,7 @@ description:
   - This token is required for authenticating against the ServiceDesk Plus Cloud API.
   - The access token is valid for 1 hour.
 extends_documentation_fragment:
-  - manageengine.sdp_cloud.sdp
-options:
-  client_id:
-    description:
-      - The Client ID generated from the Zoho API Console.
-    type: str
-    required: true
-  client_secret:
-    description:
-      - The Client Secret generated from the Zoho API Console.
-    type: str
-    required: true
-  refresh_token:
-    description:
-      - The long-lived refresh token.
-    type: str
-    required: true
-  dc:
-    description:
-      - The Data Center location (e.g., US, EU).
-    type: str
-    required: true
-    choices: [US, EU, IN, AU, CN, JP, CA, SA]
+  - manageengine.sdp_cloud.auth
 '''
 
 EXAMPLES = r'''

@@ -9,7 +9,6 @@ import pytest
 
 from tests.unit.conftest import create_mock_module
 from plugins.modules.read_record import construct_payload
-from plugins.module_utils.sdp_config import MODULE_CONFIG
 
 
 class TestReadRecordConstructPayload:

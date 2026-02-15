@@ -5,12 +5,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
 import pytest
-from unittest.mock import patch, MagicMock
 
 from tests.unit.conftest import (
-    FETCH_URL_PATH, build_fetch_url_response, build_fetch_url_error,
     create_mock_module,
 )
 
