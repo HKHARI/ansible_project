@@ -146,13 +146,29 @@ def transform_field_value(module, field_name, value, ftype):
     """
     Transform the value based on the resolved field type.
     """
-    if ftype == 'string' or ftype == 'num' or ftype == 'bool':
-        # For explicit bool types in config/UDF that want native bools
-        if ftype == 'bool':
-            if isinstance(value, str):
-                return value.lower() == 'true'
-            return bool(value)
+    if ftype == 'string':
         return value
+
+    elif ftype == 'num':
+        if isinstance(value, (int, float)):
+            return value
+        # Accept numeric strings (e.g. "42", "3.14")
+        if isinstance(value, str):
+            try:
+                return int(value)
+            except ValueError:
+                try:
+                    return float(value)
+                except ValueError:
+                    pass
+        module.fail_json(
+            msg="Numeric field '{0}' requires an integer or decimal value. Got: {1}".format(field_name, value)
+        )
+
+    elif ftype == 'bool':
+        if isinstance(value, str):
+            return value.lower() == 'true'
+        return bool(value)
 
     elif ftype == 'datetime':
         if not isinstance(value, (int, float)):

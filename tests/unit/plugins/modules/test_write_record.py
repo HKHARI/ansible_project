@@ -83,9 +83,44 @@ class TestTransformFieldValue:
         module = create_mock_module({})
         assert transform_field_value(module, 'subject', 'Hello', 'string') == 'Hello'
 
-    def test_num_passthrough(self):
+    def test_num_integer(self):
         module = create_mock_module({})
         assert transform_field_value(module, 'count', 42, 'num') == 42
+
+    def test_num_float(self):
+        module = create_mock_module({})
+        assert transform_field_value(module, 'amount', 3.14, 'num') == 3.14
+
+    def test_num_string_integer(self):
+        """Numeric strings like '42' should be coerced to int."""
+        module = create_mock_module({})
+        result = transform_field_value(module, 'count', '42', 'num')
+        assert result == 42
+        assert isinstance(result, int)
+
+    def test_num_string_decimal(self):
+        """Decimal strings like '3.14' should be coerced to float."""
+        module = create_mock_module({})
+        result = transform_field_value(module, 'amount', '3.14', 'num')
+        assert result == 3.14
+        assert isinstance(result, float)
+
+    def test_num_rejects_non_numeric_string(self):
+        """Non-numeric strings should fail."""
+        module = create_mock_module({})
+        with pytest.raises(SystemExit):
+            transform_field_value(module, 'count', 'abc', 'num')
+        module.fail_json.assert_called_once()
+        call_msg = module.fail_json.call_args[1]['msg']
+        assert 'Numeric' in call_msg
+        assert 'abc' in call_msg
+
+    def test_num_rejects_none(self):
+        """None should fail for numeric fields."""
+        module = create_mock_module({})
+        with pytest.raises(SystemExit):
+            transform_field_value(module, 'count', None, 'num')
+        module.fail_json.assert_called_once()
 
     def test_bool_from_string_true(self):
         module = create_mock_module({})
