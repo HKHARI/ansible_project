@@ -17,6 +17,22 @@ description:
   - The access token is valid for 1 hour.
 extends_documentation_fragment:
   - manageengine.sdp_cloud.auth
+options:
+  client_id:
+    description:
+      - The Client ID generated from the Zoho API Console.
+    type: str
+    required: true
+  client_secret:
+    description:
+      - The Client Secret generated from the Zoho API Console.
+    type: str
+    required: true
+  refresh_token:
+    description:
+      - The long-lived refresh token.
+    type: str
+    required: true
 '''
 
 EXAMPLES = r'''
