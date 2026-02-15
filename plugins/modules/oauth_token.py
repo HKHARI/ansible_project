@@ -9,7 +9,7 @@ DOCUMENTATION = r'''
 ---
 module: oauth_token
 author:
-  - Harish Kumar (@HKHARI)
+  - Harish Kumar (@harishkumar-k-7052)
 short_description: Generate ManageEngine SDP Cloud OAuth Access Token
 description:
   - Generates a temporary OAuth access token using a refresh token.

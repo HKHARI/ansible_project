@@ -20,7 +20,7 @@ DC_CHOICES = list(DC_MAP.keys())
 
 MODULE_CONFIG = {
     'request': {
-        'endpoint': 'request',
+        'endpoint': 'requests',
         'sortable_fields': [
             'created_time', 'due_by_time', 'first_response_due_by_time', 'last_updated_time',
             'scheduled_start_time', 'scheduled_end_time', 'subject', 'id', 'priority', 'status'
